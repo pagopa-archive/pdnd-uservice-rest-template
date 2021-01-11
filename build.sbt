@@ -1,10 +1,13 @@
 import com.typesafe.sbt.packager.docker.DockerChmodType
 
-organization := "it.pagopa"
-name := "pdnd-uservice-template"
-scalaVersion in ThisBuild := "2.13.4"
+import scala.sys.process.Process
 
-scalacOptions ++= Seq(
+ThisBuild / scalaVersion := "2.13.4"
+ThisBuild / organization := "it.pagopa"
+ThisBuild / organizationName := "Pagopa S.p.A."
+
+ThisBuild / wartremoverErrors ++= Warts.unsafe
+ThisBuild / scalacOptions ++= Seq(
   "-deprecation", // Emit warning and location for usages of deprecated APIs.
   "-encoding",
   "utf-8", // Specify character encoding used by source files.
@@ -41,15 +44,14 @@ scalacOptions ++= Seq(
   "-Ywarn-macros:before", // via som
   "-Yrangepos" // for longer squiggles
 )
+Global / semanticdbEnabled := true
+Global / semanticdbVersion := "4.4.0"
+ThisBuild / resolvers += Resolver.sonatypeRepo("public")
+ThisBuild / resolvers += Resolver.sonatypeRepo("releases")
+ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
+ThisBuild / credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
-//Resolver and Credentials
-resolvers in ThisBuild += Resolver.sonatypeRepo("public")
-resolvers in ThisBuild += Resolver.sonatypeRepo("releases")
-resolvers in ThisBuild += Resolver.sonatypeRepo("snapshots")
-
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-
-scalacOptions in (Compile, console) --= Seq("-Xfatal-warnings", "-Ywarn-unused:imports", "-Yno-imports")
+ThisBuild / libraryDependencies ++= Dependencies.Jars.`server`
 
 def tree(root: File, skipHidden: Boolean = false): Stream[File] =
   if (!root.exists || (skipHidden && root.isHidden)) Stream.empty
@@ -74,22 +76,21 @@ dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
 parallelExecution in Test := false
 fork in Test := true
 
-libraryDependencies ++= Dependencies.Jars.`server`
+lazy val generated = project.in(file("generated"))
+  .enablePlugins(OpenApiGeneratorPlugin)
+  .settings(
+    openApiInputSpec := "src/main/resources/interface-specification.yml",
+    openApiConfigFile := "config.yaml",
+    openApiValidateSpec := SettingDisabled,
+    openApiGenerateModelTests := SettingEnabled,
+    wartremoverExcluded += baseDirectory.value
+    //    scalaVersion := "2.13.4"
+  )
 
-lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
-
-generateCode := {
-  import sys.process._
-  val output = Process(
-    "openapi-generator generate -i src/main/resources/interface-specification.yml -g scala-akka-http-server -p basePackage=modules -p supportAsync=true -p skipStubs=true -o ."
-  ).!!
-  println(output)
-}
-
-(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
+lazy val root = (project in file(".")).dependsOn(generated).aggregate(generated)
 
 //Docker settings
-dockerRepository := Some("nexus.freeda.tech:5000")
+dockerRepository := Some("gateway.pdnd.dev")
 dockerBaseImage := "openjdk:8u212-jre-slim-buster"
-//version in Docker := s"${(version in ThisBuild).value}-${Process("git log -n 1 --pretty=format:%h").lineStream.head}"
+version in Docker := s"${(version in ThisBuild).value}-${Process("git log -n 1 --pretty=format:%h").lineStream.head}"
 dockerChmodType := DockerChmodType.UserGroupWriteExecute
