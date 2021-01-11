@@ -1,3 +1,2 @@
-apiPackage: "org.openapitools.client.custom.api"
 generatorName: "scala-akka-http-server"
 outputDir : "generated"
