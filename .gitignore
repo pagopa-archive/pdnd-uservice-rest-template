@@ -1,0 +1,10 @@
+target/
+.idea
+project/project
+project/target
+.vscode
+metals.sbt
+.bloop
+.metals
+.bsp
+.openapi-generator
