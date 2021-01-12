@@ -2,6 +2,7 @@ package it.pagopa.pdnd.uservice.template.server.impl
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
+import akka.management.scaladsl.AkkaManagement
 import akka.{actor => classic}
 import it.pagopa.pdnd.uservice.template.api.PetApi
 import it.pagopa.pdnd.uservice.template.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
@@ -20,9 +21,8 @@ object Main extends App {
 
     val controller = Controller(petApi)
 
-    locally {
-      Await.result(controller.bindingFuture, Duration.Inf)
-    }
+    AkkaManagement.get(classicSystem).start()
+
     Behaviors.empty
   }, "pdnd-uservice-template")
 }

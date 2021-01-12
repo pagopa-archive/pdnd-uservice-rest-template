@@ -10,6 +10,7 @@ object Dependencies {
     lazy val stream     = namespace % "akka-stream_2.13" % akkaVersion
     lazy val http       = namespace % "akka-http_2.13"   % akkaHttpVersion
     lazy val httpJson   = namespace % "akka-http-spray-json_2.13" % akkaHttpVersion
+    lazy val management = "com.lightbend.akka.management" % "akka-management_2.13" % "1.0.9" 
     lazy val slf4j      = namespace % "akka-slf4j_2.13"  % akkaVersion
   }
 
@@ -37,6 +38,7 @@ object Dependencies {
       akka.stream       % Compile,
       akka.http         % Compile,
       akka.httpJson     % Compile,
+      akka.management   % Compile,
       logback.classic   % Compile,
       akka.slf4j        % Compile,
       scalatest.core    % Test,
