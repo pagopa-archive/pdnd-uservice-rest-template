@@ -1,15 +1,16 @@
 import sbt._
 import Versions._
+import sbt.Keys.scalaVersion
 
 object Dependencies {
 
   private[this] object akka {
     lazy val namespace  = "com.typesafe.akka"
-    lazy val actorTyped = namespace %% "akka-actor-typed" % akkaVersion
-    lazy val stream     = namespace %% "akka-stream" % akkaVersion
-    lazy val http       = namespace %% "akka-http"   % akkaHttpVersion
-    lazy val httpJson   = namespace %% "akka-http-spray-json" % akkaHttpVersion
-    lazy val slf4j      = namespace %% "akka-slf4j"  % akkaVersion
+    lazy val actorTyped = namespace % "akka-actor-typed_2.13" % akkaVersion
+    lazy val stream     = namespace % "akka-stream_2.13" % akkaVersion
+    lazy val http       = namespace % "akka-http_2.13"   % akkaHttpVersion
+    lazy val httpJson   = namespace % "akka-http-spray-json_2.13" % akkaHttpVersion
+    lazy val slf4j      = namespace % "akka-slf4j_2.13"  % akkaVersion
   }
 
   private[this] object logback {
@@ -19,7 +20,7 @@ object Dependencies {
 
   private[this] object scalatest {
     lazy val namespace = "org.scalatest"
-    lazy val core      = namespace %% "scalatest" % scalatestVersion
+    lazy val core      = namespace % "scalatest_2.13" % scalatestVersion
   }
 
   private[this] object mockito {

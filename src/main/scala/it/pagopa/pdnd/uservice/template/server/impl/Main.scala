@@ -10,11 +10,6 @@ import it.pagopa.pdnd.uservice.template.server.Controller
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-@SuppressWarnings(
-  Array(
-    "org.wartremover.warts.NonUnitStatements"
-  )
-)
 object Main extends App {
 
   ActorSystem[Nothing](Behaviors.setup[Nothing] { context =>
@@ -29,5 +24,5 @@ object Main extends App {
       val _ = Await.result(controller.bindingFuture, Duration.Inf)
     }
     Behaviors.empty
-  }, "pdnd-uservice-templae")
+  }, "pdnd-uservice-template")
 }
