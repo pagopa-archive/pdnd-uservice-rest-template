@@ -53,7 +53,7 @@ generateCode := {
   println(output)
 }
 
-//(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
+(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
 
 lazy val generated = project.in(file("generated"))
   .settings(

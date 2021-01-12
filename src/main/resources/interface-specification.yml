@@ -5,7 +5,6 @@ info:
   version: 1
 servers:
   - url: /pdnd-uservice-template/1
-  - url: /pdnd-uservice-template/1
 tags:
   - name: pet
     description: Everything about your Pets
@@ -13,19 +12,6 @@ tags:
       description: Find out more
       url: http://swagger.io
 paths:
-  /probe:
-    get:
-      tags:
-        - probe
-      summary: Probe
-      operationId: probe
-      responses:
-        200:
-          description: aaa
-          content:
-            application/json:
-              schema:
-                type: string
   /pet:
     post:
       tags:

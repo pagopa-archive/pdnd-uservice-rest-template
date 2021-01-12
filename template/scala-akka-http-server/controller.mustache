@@ -10,7 +10,7 @@ import akka.actor.ActorSystem
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}})(implicit system: ActorSystem) {
 
   lazy val routes: Route = pathPrefix("{{projectName}}" / "{{appVersion}}") {
-     {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}}~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}} ~ getFromResourceDirectory("swagger-ui")
+     {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}} ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
   }
 
   val bindingFuture = Http().
