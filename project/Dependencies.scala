@@ -7,6 +7,7 @@ object Dependencies {
     lazy val namespace = "com.typesafe.akka"
     lazy val stream    = namespace %% "akka-stream" % akkaVersion
     lazy val http      = namespace %% "akka-http"   % akkaHttpVersion
+    lazy val httpJson  = namespace %% "akka-http-spray-json" % akkaHttpVersion
     lazy val slf4j     = namespace %% "akka-slf4j"  % akkaVersion
   }
 
@@ -32,6 +33,7 @@ object Dependencies {
       //
       akka.stream       % Compile,
       akka.http         % Compile,
+      akka.httpJson     % Compile,
       akka.slf4j        % Compile,
       webjars.swaggerUi % Compile,
       scalatest.core    % Test,

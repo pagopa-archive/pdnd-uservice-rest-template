@@ -1,8 +1,0 @@
-generatorName: "scala-akka-http-server"
-outputDir : "generated"
-invokerPackage: "it.pagopa.pdnd.uservice.template.server"
-modelPackage: "it.pagopa.pdnd.uservice.template.model"
-apiPackage: "it.pagopa.pdnd.uservice.template.api"
-additionalProperties:
-  dateLibrary: "java8"
-  openApiTemplateDir: "template/scala-akka-http-server/"

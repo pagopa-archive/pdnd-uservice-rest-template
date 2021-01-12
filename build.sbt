@@ -40,12 +40,15 @@ lazy val generateCode = taskKey[Unit]("A task for generating the code starting f
 generateCode := {
   import sys.process._
   val output = Process(
-    """openapi-generator generate -t template/scala-akka-http-server
+    s"""openapi-generator generate -t template/scala-akka-http-server
       |                           -i src/main/resources/interface-specification.yml
       |                           -g scala-akka-http-server
+      |                           -p projectName=${name.value}
       |                           -p invokerPackage=it.pagopa.pdnd.uservice.template.server
       |                           -p modelPackage=it.pagopa.pdnd.uservice.template.model
-      |                           -p apiPackage=it.pagopa.pdnd.uservice.template.api -o generated""".stripMargin
+      |                           -p apiPackage=it.pagopa.pdnd.uservice.template.api
+      |                           -p dateLibrary=java8
+      |                           -o generated""".stripMargin
   ).!!
   println(output)
 }

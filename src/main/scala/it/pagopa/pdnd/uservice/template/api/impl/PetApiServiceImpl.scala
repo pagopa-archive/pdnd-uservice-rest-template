@@ -22,5 +22,5 @@ class PetApiServiceImpl extends PetApiService {
    * Code: 400, Message: Invalid ID supplied
    * Code: 404, Message: Pet not found
    */
-  override def getPetById(petId: Long)(implicit toEntityMarshallerPet: ToEntityMarshaller[Pet]): Route = ???
+  override def getPetById(petId: Long)(implicit toEntityMarshallerPet: ToEntityMarshaller[Pet]): Route = getPetById200(new Pet(Some(1), "Romeo"))
 }
