@@ -16,12 +16,12 @@ object Main extends App {
     import akka.actor.typed.scaladsl.adapter._
     implicit val classicSystem: classic.ActorSystem = context.system.toClassic
 
-    val petApi = new PetApi(new PetApiServiceImpl(), new PetApiMarshallerImpl())
+    val petApi = PetApi(PetApiServiceImpl(), PetApiMarshallerImpl())
 
-    val controller = new Controller(petApi)
+    val controller = Controller(petApi)
 
     locally {
-      val _ = Await.result(controller.bindingFuture, Duration.Inf)
+      Await.result(controller.bindingFuture, Duration.Inf)
     }
     Behaviors.empty
   }, "pdnd-uservice-template")
