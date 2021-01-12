@@ -11,11 +11,6 @@ object Dependencies {
     lazy val slf4j     = namespace %% "akka-slf4j"  % akkaVersion
   }
 
-  private[this] object webjars {
-    lazy val namespace = "org.webjars"
-    lazy val swaggerUi = namespace % "swagger-ui" % swaggerUiVersion
-  }
-
   private[this] object scalatest {
     lazy val namespace = "org.scalatest"
     lazy val core      = namespace %% "scalatest" % scalatestVersion
@@ -35,7 +30,6 @@ object Dependencies {
       akka.http         % Compile,
       akka.httpJson     % Compile,
       akka.slf4j        % Compile,
-      webjars.swaggerUi % Compile,
       scalatest.core    % Test,
       mockito.core      % Test
     )
