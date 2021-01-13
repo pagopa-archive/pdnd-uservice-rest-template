@@ -1,1 +1,1 @@
-# PDND Micro Service Template
+# PDND Micro Service REST Template
