@@ -1,4 +1,4 @@
-package it.pagopa.pdnd.uservice.template.server.impl
+package it.pagopa.pdnd.uservice.resttemplate.server.impl
 
 import akka.actor.ActorSystem
 import org.slf4j.LoggerFactory

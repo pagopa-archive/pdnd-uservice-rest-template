@@ -1,9 +1,9 @@
-package it.pagopa.pdnd.uservice.template.api.impl
+package it.pagopa.pdnd.uservice.resttemplate.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Route
-import it.pagopa.pdnd.uservice.template.api.PetApiService
-import it.pagopa.pdnd.uservice.template.model.Pet
+import it.pagopa.pdnd.uservice.resttemplate.api.PetApiService
+import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 
 class PetApiServiceImpl extends PetApiService {
   /**
