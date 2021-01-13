@@ -31,7 +31,9 @@ generateCode := {
 
 (compile in Compile) := ((compile in Compile) dependsOn generateCode).value
 
-lazy val generated = project.in(file("generated"))
+cleanFiles += baseDirectory.value / "generated" / "src"
+
+lazy val generated = project.in(file("generated")).settings(scalacOptions := Seq())
 
 lazy val root = (project in file(".")).
   settings(
