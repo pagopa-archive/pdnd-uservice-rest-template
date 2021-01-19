@@ -26,7 +26,6 @@ generateCode := {
        |                           -p dateLibrary=java8
        |                           -o generated""".stripMargin
   ).!!
-  println(output)
 }
 
 (compile in Compile) := ((compile in Compile) dependsOn generateCode).value
@@ -39,14 +38,15 @@ lazy val root = (project in file(".")).
   settings(
     name := "pdnd-uservice-rest-template",
     parallelExecution in Test := false,
+    dockerRepository in Docker := Some(System.getenv("DOCKER_REPO")),
+    version in Docker := s"${(version in ThisBuild).value}".toLowerCase,
     packageName in Docker := s"services/${name.value}",
     daemonUser in Docker  := "daemon",
-    dockerRepository in Docker := Some(System.getenv("DOCKER_REPO")),
-    version in Docker := s"${(version in ThisBuild).value}-${Process("git log -n 1 --pretty=format:%h").lineStream.head}",
-    dockerExposedPorts in Docker := Seq(8080),
+    dockerExposedPorts in Docker := Seq(8088),
     dockerBaseImage in Docker := "openjdk:8-jre-alpine",
     dockerUpdateLatest in Docker := true
   ).
   dependsOn(generated).
   aggregate(generated).
   enablePlugins(AshScriptPlugin, DockerPlugin)
+
