@@ -17,6 +17,12 @@ object Dependencies {
     lazy val namespace = "ch.qos.logback"
     lazy val classic   = namespace % "logback-classic" % logbackVersion
   }
+  
+  private[this] object kamon {
+    lazy val namespace  = "io.kamon"
+    lazy val bundle     = namespace %% "kamon-bundle" % kamonVersion
+    lazy val prometheus = namespace %% "kamon-prometheus" % kamonVersion
+  }
 
   private[this] object scalatest {
     lazy val namespace = "org.scalatest"
@@ -40,6 +46,8 @@ object Dependencies {
       akka.management   % Compile,
       logback.classic   % Compile,
       akka.slf4j        % Compile,
+      kamon.bundle      % Compile,
+      kamon.prometheus  % Compile,
       scalatest.core    % Test,
       mockito.core      % Test
     )

@@ -13,8 +13,11 @@ import it.pagopa.pdnd.uservice.resttemplate.api.PetApi
 import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
 import it.pagopa.pdnd.uservice.resttemplate.common.system.{Authenticator, classicActorSystem}
 import it.pagopa.pdnd.uservice.resttemplate.server.Controller
+import kamon.Kamon
 
 object Main extends App {
+
+  Kamon.init()
 
   val petApi = PetApi(PetApiServiceImpl(), PetApiMarshallerImpl(), SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator))
 
