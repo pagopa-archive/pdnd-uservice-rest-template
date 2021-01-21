@@ -4,7 +4,7 @@ info:
   description: 'This is a sample server'
   version: 'v1'
 servers:
-  - url: /pdnd-uservice-template/v1
+  - url: /pdnd-uservice-rest-template/v1
 tags:
   - name: pet
     description: Everything about your Pets
