@@ -24,5 +24,11 @@ object Main extends App {
   AkkaManagement.get(classicActorSystem).start()
   
   val controller = Controller(petApi)
-  
+
+  val bindingFuture = Http().
+    newServerAt(
+      "0.0.0.0",
+      8088,
+    ).
+    bind(controller.routes)
 }
