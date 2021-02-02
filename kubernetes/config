@@ -10,4 +10,4 @@ popd  > /dev/null
 
 name=$(cat $SCRIPT_PATH/../build.sbt | grep "name :=" | awk -F:= '{ print $2 }' | sed 's/\"//' | sed 's/\",//' | sed 's/ //' | tr '[:upper:]' '[:lower:]')
 
-version='v'$(cat $SCRIPT_PATH/../version.sbt | grep version | awk -F:= '{ print $2 }' | sed 's/\"//g' | sed 's/ //' | tr '[:upper:]' '[:lower:]')
+version=$($SCRIPT_PATH/../version.sh)
