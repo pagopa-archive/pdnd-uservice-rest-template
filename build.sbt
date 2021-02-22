@@ -50,7 +50,7 @@ generateCode := {
 
 }
 
-//(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
+(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
 
 cleanFiles += baseDirectory.value / "generated" / "src"
 
@@ -92,5 +92,5 @@ lazy val root = (project in file(".")).
     wartremoverErrors ++= Warts.unsafe
   ).
   aggregate(client).
-  dependsOn(generated, client).
+  dependsOn(generated).
   enablePlugins(AshScriptPlugin, DockerPlugin)
