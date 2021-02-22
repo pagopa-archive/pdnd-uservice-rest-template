@@ -26,6 +26,9 @@ paths:
               $ref: '#/components/schemas/Pet'
         required: true
       responses:
+        200:
+          description: Pet create
+          content: {}
         405:
           description: Invalid input
           content: {}

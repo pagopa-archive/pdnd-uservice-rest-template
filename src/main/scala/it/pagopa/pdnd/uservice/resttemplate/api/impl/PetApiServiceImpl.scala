@@ -9,7 +9,9 @@ class PetApiServiceImpl extends PetApiService {
   /**
    * Code: 405, Message: Invalid input
    */
-  override def addPet(pet: Pet): Route = ???
+  override def addPet(pet: Pet): Route = {
+    addPet200
+  }
 
   /**
    * Code: 400, Message: Invalid ID supplied
@@ -22,5 +24,5 @@ class PetApiServiceImpl extends PetApiService {
    * Code: 400, Message: Invalid ID supplied
    * Code: 404, Message: Pet not found
    */
-  override def getPetById(petId: Long)(using ToEntityMarshaller[Pet]): Route = getPetById200(Pet(Some(1), "Romeo"))
+  override def getPetById(petId: Long)(implicit toEntityMarshaller: ToEntityMarshaller[Pet]): Route = getPetById200(Pet(Some(1), "Romeo"))
 }

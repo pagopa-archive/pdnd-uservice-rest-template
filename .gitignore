@@ -9,4 +9,5 @@ metals.sbt
 .bsp
 .openapi-generator
 generated/src/
+client/src/
 openapitools.json
