@@ -9,7 +9,9 @@ class PetApiServiceImpl extends PetApiService {
   /**
    * Code: 405, Message: Invalid input
    */
-  override def addPet(pet: Pet): Route = ???
+  override def addPet(pet: Pet): Route = {
+    addPet200
+  }
 
   /**
    * Code: 400, Message: Invalid ID supplied

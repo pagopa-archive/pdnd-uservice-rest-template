@@ -41,16 +41,16 @@ generateCode := {
        |                               -i src/main/resources/interface-specification.yml
        |                               -g scala-akka
        |                               -p projectName=${name.value}
-       |                               -p invokerPackage=it.pagopa.${packagePrefix}.server
-       |                               -p modelPackage=it.pagopa.${packagePrefix}.model
-       |                               -p apiPackage=it.pagopa.${packagePrefix}.api
+       |                               -p invokerPackage=it.pagopa.${packagePrefix}.client.invoker
+       |                               -p modelPackage=it.pagopa.${packagePrefix}.client.model
+       |                               -p apiPackage=it.pagopa.${packagePrefix}.client.api
        |                               -p dateLibrary=java8
        |                               -o client""".stripMargin
   ).!!
 
 }
 
-(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
+//(compile in Compile) := ((compile in Compile) dependsOn generateCode).value
 
 cleanFiles += baseDirectory.value / "generated" / "src"
 
@@ -92,5 +92,5 @@ lazy val root = (project in file(".")).
     wartremoverErrors ++= Warts.unsafe
   ).
   aggregate(client).
-  dependsOn(generated).
+  dependsOn(generated, client).
   enablePlugins(AshScriptPlugin, DockerPlugin)
