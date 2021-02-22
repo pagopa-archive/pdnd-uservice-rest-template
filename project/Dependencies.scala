@@ -6,13 +6,20 @@ object Dependencies {
   private[this] object akka {
     lazy val namespace  = "com.typesafe.akka"
     lazy val actorTyped = namespace %% "akka-actor-typed" % akkaVersion
+    lazy val actor      = namespace %% "akka-actor" % akkaVersion
     lazy val stream     = namespace %% "akka-stream" % akkaVersion
     lazy val http       = namespace %% "akka-http"   % akkaHttpVersion
     lazy val httpJson   = namespace %% "akka-http-spray-json" % akkaHttpVersion
+    lazy val httpJson4s = "de.heikoseeberger" %% "akka-http-json4s" % "1.35.3"
     lazy val management = "com.lightbend.akka.management" %% "akka-management" % "1.0.9" 
     lazy val slf4j      = namespace %% "akka-slf4j"  % akkaVersion
   }
 
+  private[this] object json4s {
+    lazy val namespace = "org.json4s"
+    lazy val jackson   = namespace %% "json4s-jackson" % "3.6.10"
+  }
+  "org.json4s" %% "json4s-jackson" % "3.6.10"
   private[this] object logback {
     lazy val namespace = "ch.qos.logback"
     lazy val classic   = namespace % "logback-classic" % logbackVersion
@@ -50,6 +57,12 @@ object Dependencies {
       kamon.prometheus  % Compile,
       scalatest.core    % Test,
       mockito.core      % Test
+    )
+    lazy val client: Seq[ModuleID] = Seq(
+      akka.stream       % Compile,
+      akka.http         % Compile,
+      akka.httpJson4s   % Compile,
+      json4s.jackson    % Compile
     )
   }
 }

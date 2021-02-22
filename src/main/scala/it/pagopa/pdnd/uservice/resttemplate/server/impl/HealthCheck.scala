@@ -1,12 +1,11 @@
 package it.pagopa.pdnd.uservice.resttemplate.server.impl
 
-import akka.actor.ActorSystem
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
 // Enabled in application.conf
-class HealthCheck(system: ActorSystem) extends (() => Future[Boolean]) {
+class HealthCheck() extends (() => Future[Boolean]) {
   
   private val log = LoggerFactory.getLogger(getClass)
 
@@ -16,7 +15,7 @@ class HealthCheck(system: ActorSystem) extends (() => Future[Boolean]) {
   }
 }
 
-class LiveCheck(system: ActorSystem) extends (() => Future[Boolean]) {
+class LiveCheck() extends (() => Future[Boolean]) {
   
   private val log = LoggerFactory.getLogger(getClass)
 
