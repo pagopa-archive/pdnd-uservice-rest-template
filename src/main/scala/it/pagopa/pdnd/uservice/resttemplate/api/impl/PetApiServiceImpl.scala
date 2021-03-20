@@ -5,6 +5,11 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApiService
 import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.ImplicitParameter"
+  )
+)
 class PetApiServiceImpl extends PetApiService {
   /**
    * Code: 405, Message: Invalid input

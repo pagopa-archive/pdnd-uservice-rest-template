@@ -18,15 +18,15 @@ object Main extends App {
 
   Kamon.init()
 
-  val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
-  val file = new File("/tmp/interface-specification.yml")
+  private val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
+  private val file = new File("/tmp/interface-specification.yml")
   locally {
     val _ = resource.transferTo(new FileOutputStream(file))
   }
-  val api = new OpenApi3Parser().parse(file, true)
-  val validator = new RequestValidator(api)
+  private val api = new OpenApi3Parser().parse(file, true)
+  private val validator = new RequestValidator(api)
 
-  val petApi = new PetApi(
+  private val petApi = new PetApi(
     new PetApiServiceImpl(),
     new PetApiMarshallerImpl(),
     SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator),
@@ -39,14 +39,14 @@ object Main extends App {
 
   locally {
     val _ = AkkaManagement.get(classicActorSystem).start()
+
+    val controller = new Controller(petApi)
+
+    val _ = Http().
+      newServerAt(
+        "0.0.0.0",
+        8088,
+      ).
+      bind(controller.routes)
   }
-
-  val controller = new Controller(petApi)
-
-  val bindingFuture = Http().
-    newServerAt(
-      "0.0.0.0",
-      8088,
-    ).
-    bind(controller.routes)
 }

@@ -58,6 +58,10 @@ import scala.util.{Failure, Success, Try}
               Method.POST
             case HttpMethods.GET =>
               Method.GET
+            case HttpMethods.PUT =>
+              Method.PUT
+            case HttpMethods.DELETE =>
+              Method.DELETE
             case _ =>
               Method.GET
           })

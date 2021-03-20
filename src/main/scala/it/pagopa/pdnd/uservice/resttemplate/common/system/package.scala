@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext
 
 package object system {
 
-  implicit val actorSystem: ActorSystem[Nothing] = ActorSystem[Nothing](Behaviors.empty, "pdnd-uservice-rest-template-system")
+  implicit val actorSystem: ActorSystem[Nothing] = ActorSystem[Nothing](Behaviors.empty[Nothing], "pdnd-uservice-rest-template-system")
 
   implicit val executionContext: ExecutionContext = actorSystem.executionContext
 
