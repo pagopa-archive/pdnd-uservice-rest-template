@@ -93,3 +93,5 @@ components:
         name:
           type: string
           example: doggie
+          maxLength: 64
+          minLength: 6

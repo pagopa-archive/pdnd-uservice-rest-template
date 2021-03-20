@@ -1,6 +1,6 @@
 import scala.sys.process.Process
 
-ThisBuild / scalaVersion := "2.13.4"
+ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / organization := "it.pagopa"
 ThisBuild / organizationName := "Pagopa S.p.A."
 ThisBuild / libraryDependencies := Dependencies.Jars.`server`.map(

@@ -13,12 +13,4 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
      {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}} ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
   }
 
-/*
-  val bindingFuture = Http().
-      newServerAt(
-        {{#serverBindingAddress}}"{{serverBindingAddress}}"{{/serverBindingAddress}}{{^serverBindingAddress}}"0.0.0.0"{{/serverBindingAddress}},
-        {{#serverBindingPort}}"{{serverBindingPort}}"{{/serverBindingPort}}{{^serverBindingPort}}8088{{/serverBindingPort}},
-      ).
-      bind(routes)
-*/
 }
