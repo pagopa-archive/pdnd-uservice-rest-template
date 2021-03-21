@@ -1,7 +1,7 @@
 package {{package}}
 
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directive1, Route}
 {{^pathMatcherPatterns.isEmpty}}import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 {{/pathMatcherPatterns.isEmpty}}
@@ -24,24 +24,13 @@ import {{invokerPackage}}.PartsAndFiles
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.directives.FileInfo
 {{/hasMultipart}}
-import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
-import org.openapi4j.core.validation.ValidationException
-import org.openapi4j.operation.validator.model.Request.Method
-import org.openapi4j.operation.validator.model.impl.{Body, DefaultRequest}
-import org.openapi4j.operation.validator.validation.RequestValidator
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success, Try}
+
 
 {{#operations}}
     class {{classname}}(
     {{classVarName}}Service: {{classname}}Service{{#hasMarshalling}},
     {{classVarName}}Marshaller: {{classname}}Marshaller{{/hasMarshalling}},
-    wrappingDirective: Directive1[Unit],
-    validator: Option[RequestValidator] = None,
-    validationExceptionToRoute: Option[ValidationException => Route] = None
+    wrappingDirective: Directive1[Unit]
     ) {{#hasMultipart}} extends MultipartDirectives with StringDirectives {{/hasMultipart}}{
     {{#pathMatcherPatterns}}import {{classname}}Patterns.{{pathMatcherVarName}}
     {{/pathMatcherPatterns}}
@@ -49,73 +38,17 @@ import scala.util.{Failure, Success, Try}
     {{#hasMarshalling}}import {{classVarName}}Marshaller._
     {{/hasMarshalling}}
 
-      def validationFunction(materializer: Materializer, httpRequest: HttpRequest)(route: Route): Route = {
-        if (!(validator.isDefined && validationExceptionToRoute.isDefined))
-          route
-        else {
-          val builder = new DefaultRequest.Builder(httpRequest.uri.toString(), httpRequest.method match {
-            case HttpMethods.POST =>
-              Method.POST
-            case HttpMethods.GET =>
-              Method.GET
-            case HttpMethods.PUT =>
-              Method.PUT
-            case HttpMethods.DELETE =>
-              Method.DELETE
-            case _ =>
-              Method.GET
-          })
-          val entity = Await.result(httpRequest.entity.dataBytes.map(_.utf8String).runWith(Sink.seq)(materializer), Duration.Inf).headOption
-
-          val contentType = httpRequest.entity.getContentType().toString
-          val requestHeaders = ("Content-Type", contentType) :: httpRequest.
-            headers.
-            map(
-              header =>
-                (header.name(), header.value)
-            ).
-            toList
-
-          val headers = (("Content-Type", contentType) :: requestHeaders).map(p => (p._1, Seq(p._2).asJava: java.util.Collection[String])).toMap.asJava
-
-          val validatingRequest = entity.
-            fold(builder)(entity => builder.body(Body.from(entity))).
-            headers(headers).build()
-
-          validator.
-            fold(route) {
-              validator =>
-                Try(validator.validate(validatingRequest)) match {
-                  case Failure(e: ValidationException) =>
-                    validationExceptionToRoute.fold[Route](complete((400, e.getMessage)))(_ (e))
-                  case Failure(e) =>
-                    throw e
-                  case Success(_) =>
-                    route
-                }
-            }
-        }
-      }
-
     lazy val route: Route =
     {{#operation}}
         path({{#vendorExtensions.x-paths}}{{#isText}}"{{/isText}}{{value}}{{#isText}}"{{/isText}}{{^-last}} / {{/-last}}{{/vendorExtensions.x-paths}}) { {{^pathParams.isEmpty}}({{#pathParams}}{{paramName}}{{^-last}}, {{/-last}}{{/pathParams}}) => {{/pathParams.isEmpty}}
-        {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {
-        extractMaterializer { materializer =>
-          extractRequest {
-            request =>
-            validationFunction(materializer, request){
-            wrappingDirective { _ => {{^queryParams.isEmpty}}
-                parameters({{#queryParams}}"{{baseName}}".as[{{dataType}}]{{^required}}.?{{#vendorExtensions.x-has-default-value}}({{{defaultValue}}}){{/vendorExtensions.x-has-default-value}}{{/required}}{{^-last}}, {{/-last}}{{/queryParams}}) { ({{#queryParams}}{{paramName}}{{^-last}}, {{/-last}}{{/queryParams}}) =>{{/queryParams.isEmpty}} {{^headerParams.isEmpty}}
-                {{#headerParams}}{{#required}}headerValueByName{{/required}}{{^required}}optionalHeaderValueByName{{/required}}("{{baseName}}") { {{paramName}} => {{/headerParams}}{{/headerParams.isEmpty}}{{^cookieParams.isEmpty}}
-                {{#cookieParams}}{{#required}}cookie({{/required}}{{^required}}optionalCookie({{/required}}"{{baseName}}"){ {{paramName}} => {{/cookieParams}}{{/cookieParams.isEmpty}}{{#isMultipart}}
-                {{> multipart}}{{/isMultipart}}{{^isMultipart}}{{> noMultipart}}{{/isMultipart}}{{^cookieParams.isEmpty}}
-                }{{/cookieParams.isEmpty}}{{^headerParams.isEmpty}}
-                }{{/headerParams.isEmpty}}{{^queryParams.isEmpty}}
-                }{{/queryParams.isEmpty}}
-              }
-             }
-            }
+        {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} { wrappingDirective { _ => {{^queryParams.isEmpty}}
+            parameters({{#queryParams}}"{{baseName}}".as[{{dataType}}]{{^required}}.?{{#vendorExtensions.x-has-default-value}}({{{defaultValue}}}){{/vendorExtensions.x-has-default-value}}{{/required}}{{^-last}}, {{/-last}}{{/queryParams}}) { ({{#queryParams}}{{paramName}}{{^-last}}, {{/-last}}{{/queryParams}}) =>{{/queryParams.isEmpty}} {{^headerParams.isEmpty}}
+            {{#headerParams}}{{#required}}headerValueByName{{/required}}{{^required}}optionalHeaderValueByName{{/required}}("{{baseName}}") { {{paramName}} => {{/headerParams}}{{/headerParams.isEmpty}}{{^cookieParams.isEmpty}}
+            {{#cookieParams}}{{#required}}cookie({{/required}}{{^required}}optionalCookie({{/required}}"{{baseName}}"){ {{paramName}} => {{/cookieParams}}{{/cookieParams.isEmpty}}{{#isMultipart}}
+            {{> multipart}}{{/isMultipart}}{{^isMultipart}}{{> noMultipart}}{{/isMultipart}}{{^cookieParams.isEmpty}}
+            }{{/cookieParams.isEmpty}}{{^headerParams.isEmpty}}
+            }{{/headerParams.isEmpty}}{{^queryParams.isEmpty}}
+            }{{/queryParams.isEmpty}}
           }
         }
         }{{^-last}} ~{{/-last}}

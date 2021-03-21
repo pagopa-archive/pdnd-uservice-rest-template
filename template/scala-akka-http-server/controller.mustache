@@ -6,11 +6,79 @@ import akka.http.scaladsl.server.Route
 {{/operations}}{{/apis}}{{/apiInfo}}
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
+import akka.stream.scaladsl.Sink
+import org.openapi4j.core.validation.ValidationException
+import org.openapi4j.operation.validator.model.Request.Method
+import org.openapi4j.operation.validator.model.impl.{Body, DefaultRequest}
+import org.openapi4j.operation.validator.validation.RequestValidator
+import org.openapi4j.parser.OpenApi3Parser
 
-class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}})(implicit system: ActorSystem) {
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success, Try}
+import java.io.{File, FileOutputStream}
+
+class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationException => Route] = None)(implicit system: ActorSystem) {
+
+      private val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
+      private val tmpFile = File.createTempFile("tmp", "interface-specification.yml")
+      tmpFile.deleteOnExit()
+      resource.transferTo(new FileOutputStream(tmpFile))
+      private val api = new OpenApi3Parser().parse(tmpFile, true)
+      private val validator = new RequestValidator(api)
+
+      def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
+        if (!(validationExceptionToRoute.isDefined && !httpRequest.uri.toString.contains("swagger-ui")))
+          route
+        else {
+          val builder = new DefaultRequest.Builder(httpRequest.uri.toString(), httpRequest.method match {
+            case HttpMethods.POST =>
+              Method.POST
+            case HttpMethods.GET =>
+              Method.GET
+            case HttpMethods.PUT =>
+              Method.PUT
+            case HttpMethods.DELETE =>
+              Method.DELETE
+            case _ =>
+              Method.GET
+          })
+          val entity = Await.result(httpRequest.entity.dataBytes.map(_.utf8String).runWith(Sink.seq), Duration.Inf).headOption
+
+          val contentType = httpRequest.entity.getContentType().toString
+          val requestHeaders = ("Content-Type", contentType) :: httpRequest.
+            headers.
+            map(
+              header =>
+                (header.name(), header.value)
+            ).
+            toList
+
+          val headers = (("Content-Type", contentType) :: requestHeaders).map(p => (p._1, Seq(p._2).asJava: java.util.Collection[String])).toMap.asJava
+
+          val validatingRequest = entity.
+            fold(builder)(entity => builder.body(Body.from(entity))).
+            headers(headers).build()
+            Try(validator.validate(validatingRequest)) match {
+               case Failure(e: ValidationException) =>
+                 validationExceptionToRoute.fold[Route](complete((400, e.getMessage)))(_ (e))
+               case Failure(e) =>
+                 throw e
+               case Success(_) =>
+                 route
+              }
+          }
+      }
 
   lazy val routes: Route = pathPrefix("{{projectName}}" / "{{appVersion}}") {
-     {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}} ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
+    extractRequest {
+      request =>
+        validationFunction(request){
+          {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
+      }
+    } ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
   }
 
 }
