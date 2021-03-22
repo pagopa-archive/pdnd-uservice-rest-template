@@ -26,6 +26,19 @@ object Main extends App {
     val _ = AkkaManagement.get(classicActorSystem).start()
 
     val controller = new Controller(petApi, validationExceptionToRoute = Some(e => {
+      val results = e.results()
+      results.crumbs().asScala.foreach {
+        crumb =>
+          println(crumb.crumb())
+      }
+      results.items().asScala.foreach {
+        item =>
+          println(item.dataCrumbs())
+          println(item.dataJsonPointer())
+          println(item.schemaCrumbs())
+          println(item.message())
+          println(item.severity())
+      }
       val message = e.results().items().asScala.map(_.message()).mkString("\n")
       complete((400, message))
     }))
