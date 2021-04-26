@@ -4,35 +4,41 @@ import sbt._
 object Dependencies {
 
   private[this] object akka {
-    lazy val namespace  = "com.typesafe.akka"
-    lazy val actorTyped = namespace %% "akka-actor-typed" % akkaVersion
-    lazy val actor      = namespace %% "akka-actor" % akkaVersion
-    lazy val stream     = namespace %% "akka-stream" % akkaVersion
-    lazy val http       = namespace %% "akka-http"   % akkaHttpVersion
-    lazy val httpJson   = namespace %% "akka-http-spray-json" % akkaHttpVersion
-    lazy val httpJson4s = "de.heikoseeberger" %% "akka-http-json4s" % "1.35.3"
-    lazy val management = "com.lightbend.akka.management" %% "akka-management" % "1.0.10"
-    lazy val slf4j      = namespace %% "akka-slf4j"  % akkaVersion
+    lazy val namespace   = "com.typesafe.akka"
+    lazy val actorTyped  = namespace                       %% "akka-actor-typed"       % akkaVersion
+    lazy val actor       = namespace                       %% "akka-actor"             % akkaVersion
+    lazy val stream      = namespace                       %% "akka-stream"            % akkaVersion
+    lazy val persistence = namespace                       %% "akka-persistence-typed" % akkaVersion
+    lazy val http        = namespace                       %% "akka-http"              % akkaHttpVersion
+    lazy val httpJson    = namespace                       %% "akka-http-spray-json"   % akkaHttpVersion
+    lazy val httpJson4s  = "de.heikoseeberger"             %% "akka-http-json4s"       % httpJson4sVersion
+    lazy val management  = "com.lightbend.akka.management" %% "akka-management"        % akkaManagementVersion
+    lazy val slf4j       = namespace                       %% "akka-slf4j"             % akkaVersion
+  }
+
+  private[this] object scalpb {
+    lazy val namespace = "com.thesamet.scalapb"
+    lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
 
   private[this] object json4s {
     lazy val namespace = "org.json4s"
-    lazy val jackson   = namespace %% "json4s-jackson" % "3.6.11"
+    lazy val jackson   = namespace %% "json4s-jackson" % json4sVersion
   }
 
   private[this] object logback {
     lazy val namespace = "ch.qos.logback"
     lazy val classic   = namespace % "logback-classic" % logbackVersion
   }
-  
+
   private[this] object kamon {
     lazy val namespace  = "io.kamon"
-    lazy val bundle     = namespace %% "kamon-bundle" % kamonVersion
+    lazy val bundle     = namespace %% "kamon-bundle"     % kamonVersion
     lazy val prometheus = namespace %% "kamon-prometheus" % kamonVersion
   }
 
   private[this] object openapi4j {
-    lazy val namespace = "org.openapi4j"
+    lazy val namespace          = "org.openapi4j"
     lazy val operationValidator = namespace % "openapi-operation-validator" % openapi4jVersion
   }
 
@@ -52,6 +58,7 @@ object Dependencies {
       "javax.annotation" % "javax.annotation-api" % "1.3.2" % "compile",
       //
       akka.actorTyped              % Compile,
+      akka.persistence             % Compile,
       akka.stream                  % Compile,
       akka.http                    % Compile,
       akka.httpJson                % Compile,
@@ -61,14 +68,11 @@ object Dependencies {
       openapi4j.operationValidator % Compile,
       kamon.bundle                 % Compile,
       kamon.prometheus             % Compile,
+      scalpb.core                  % "protobuf",
       scalatest.core               % Test,
       mockito.core                 % Test
     )
-    lazy val client: Seq[ModuleID] = Seq(
-      akka.stream       % Compile,
-      akka.http         % Compile,
-      akka.httpJson4s   % Compile,
-      json4s.jackson    % Compile
-    )
+    lazy val client: Seq[ModuleID] =
+      Seq(akka.stream % Compile, akka.http % Compile, akka.httpJson4s % Compile, json4s.jackson % Compile)
   }
 }

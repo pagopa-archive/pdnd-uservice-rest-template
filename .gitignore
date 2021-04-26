@@ -11,3 +11,4 @@ metals.sbt
 generated/src/
 client/src/
 openapitools.json
+.DS_Store

@@ -28,10 +28,10 @@ paths:
       responses:
         200:
           description: Pet create
-          content: {}
+          content: { }
         405:
           description: Invalid input
-          content: {}
+          content: { }
   /pet/{petId}:
     get:
       tags:
@@ -56,10 +56,10 @@ paths:
                 $ref: '#/components/schemas/Pet'
         400:
           description: Invalid ID supplied
-          content: {}
+          content: { }
         404:
           description: Pet not found
-          content: {}
+          content: { }
     delete:
       tags:
         - pet
@@ -71,15 +71,17 @@ paths:
           description: Pet id to delete
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            pattern: "\\d+"
       responses:
+        200:
+          description: successful operation
         400:
           description: Invalid ID supplied
-          content: {}
+          content: { }
         404:
           description: Pet not found
-          content: {}
+          content: { }
 components:
   schemas:
     Pet:
