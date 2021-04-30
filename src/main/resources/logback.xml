@@ -11,7 +11,7 @@
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>8192</queueSize>
         <neverBlock>true</neverBlock>
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="CONSOLE"/>
     </appender>
 
     <root level="DEBUG">

@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+import "scalapb/scalapb.proto";
+import "v1/pet.proto";
+
+option (scalapb.options) = {
+  package_name: "it.pagopa.pdnd.uservice.resttemplate.model.persistence.serializer.v1"
+};
+
+message PetAddedV1 {
+  required PetV1 pet = 1;
+}
+
+message PetDeletedV1 {
+  required string petId = 1;
+}

@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 // Enabled in application.conf
 class HealthCheck() extends (() => Future[Boolean]) {
-  
+
   private val log = LoggerFactory.getLogger(getClass)
 
   override def apply(): Future[Boolean] = {
@@ -16,7 +16,7 @@ class HealthCheck() extends (() => Future[Boolean]) {
 }
 
 class LiveCheck() extends (() => Future[Boolean]) {
-  
+
   private val log = LoggerFactory.getLogger(getClass)
 
   override def apply(): Future[Boolean] = {
