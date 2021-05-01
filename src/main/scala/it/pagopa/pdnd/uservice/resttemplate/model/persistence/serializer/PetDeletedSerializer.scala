@@ -20,7 +20,6 @@ class PetDeletedSerializer extends SerializerWithStringManifest {
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
     case event: PetDeleted => serialize(event, PetDeletedManifest, currentVersion)
-
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Throw"))
@@ -31,7 +30,6 @@ class PetDeletedSerializer extends SerializerWithStringManifest {
       throw new NotSerializableException(
         s"Unable to handle manifest: [[$manifest]], currentVersion: [[$currentVersion]] "
       )
-
   }
 
 }

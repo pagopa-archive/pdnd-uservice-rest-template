@@ -5,18 +5,20 @@ object Dependencies {
 
   private[this] object akka {
     lazy val namespace   = "com.typesafe.akka"
-    lazy val actorTyped  = namespace                       %% "akka-actor-typed"       % akkaVersion
-    lazy val actor       = namespace                       %% "akka-actor"             % akkaVersion
-    lazy val stream      = namespace                       %% "akka-stream"            % akkaVersion
-    lazy val persistence = namespace                       %% "akka-persistence-typed" % akkaVersion
-    lazy val http        = namespace                       %% "akka-http"              % akkaHttpVersion
-    lazy val httpJson    = namespace                       %% "akka-http-spray-json"   % akkaHttpVersion
-    lazy val httpJson4s  = "de.heikoseeberger"             %% "akka-http-json4s"       % httpJson4sVersion
-    lazy val management  = "com.lightbend.akka.management" %% "akka-management"        % akkaManagementVersion
-    lazy val slf4j       = namespace                       %% "akka-slf4j"             % akkaVersion
+    lazy val actorTyped  = namespace                       %% "akka-actor-typed"            % akkaVersion
+    lazy val stream      = namespace                       %% "akka-stream"                 % akkaVersion
+    lazy val persistence = namespace                       %% "akka-persistence-typed"      % akkaVersion
+    lazy val sharding    = namespace                       %% "akka-cluster-sharding-typed" % akkaVersion
+    lazy val http        = namespace                       %% "akka-http"                   % akkaHttpVersion
+    lazy val httpJson    = namespace                       %% "akka-http-spray-json"        % akkaHttpVersion
+    lazy val httpJson4s  = "de.heikoseeberger"             %% "akka-http-json4s"            % httpJson4sVersion
+    lazy val management  = "com.lightbend.akka.management" %% "akka-management"             % akkaManagementVersion
+    lazy val slf4j       = namespace                       %% "akka-slf4j"                  % akkaVersion
   }
 
-  private[this] object scalpb {
+  lazy val Protobuf  = "protobuf"
+
+  private[this] object scalaprotobuf {
     lazy val namespace = "com.thesamet.scalapb"
     lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
@@ -59,6 +61,7 @@ object Dependencies {
       //
       akka.actorTyped              % Compile,
       akka.persistence             % Compile,
+      akka.sharding                % Compile,
       akka.stream                  % Compile,
       akka.http                    % Compile,
       akka.httpJson                % Compile,
@@ -68,7 +71,8 @@ object Dependencies {
       openapi4j.operationValidator % Compile,
       kamon.bundle                 % Compile,
       kamon.prometheus             % Compile,
-      scalpb.core                  % "protobuf",
+      scalaprotobuf.core           % Protobuf,
+      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Compile,
       scalatest.core               % Test,
       mockito.core                 % Test
     )

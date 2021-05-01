@@ -14,12 +14,16 @@ class PetAddedSerializer extends SerializerWithStringManifest {
 
   override def identifier: Int = 10000
 
-  override def manifest(o: AnyRef): String = s"${o.getClass.getName}|$currentVersion"
+  override def manifest(o: AnyRef): String = {
+    println(s"${o.getClass.getName}|$currentVersion")
+    s"${o.getClass.getName}|$currentVersion"
+  }
 
   final val PetAddedManifest: String = classOf[PetAdded].getName
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
-    case event: PetAdded => serialize(event, PetAddedManifest, currentVersion)
+    case event: PetAdded =>
+      serialize(event, PetAddedManifest, currentVersion)
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Throw"))
@@ -30,7 +34,6 @@ class PetAddedSerializer extends SerializerWithStringManifest {
       throw new NotSerializableException(
         s"Unable to handle manifest: [[$manifest]], currentVersion: [[$currentVersion]] "
       )
-
   }
 
 }
