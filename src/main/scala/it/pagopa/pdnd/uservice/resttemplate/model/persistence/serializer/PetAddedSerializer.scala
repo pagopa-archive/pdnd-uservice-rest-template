@@ -14,10 +14,7 @@ class PetAddedSerializer extends SerializerWithStringManifest {
 
   override def identifier: Int = 10000
 
-  override def manifest(o: AnyRef): String = {
-    println(s"${o.getClass.getName}|$currentVersion")
-    s"${o.getClass.getName}|$currentVersion"
-  }
+  override def manifest(o: AnyRef): String = s"${o.getClass.getName}|$currentVersion"
 
   final val PetAddedManifest: String = classOf[PetAdded].getName
 

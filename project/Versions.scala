@@ -1,6 +1,8 @@
 object Versions {
   lazy val akkaVersion            = "2.6.14"
   lazy val akkaHttpVersion        = "10.2.4"
+  lazy val awsSdkVersion          = "2.4.17"
+  lazy val s3Persistence          = "1.0.27"
   lazy val httpJson4sVersion      = "1.36.0"
   lazy val akkaManagementVersion  = "1.0.10"
   lazy val json4sVersion          = "3.6.11"
@@ -10,5 +12,4 @@ object Versions {
   lazy val logbackVersion         = "1.2.3"
   lazy val scalatestVersion       = "3.2.8"
   lazy val mockitoVersion         = "3.9.0"
-  lazy val stateMonitoringVersion = "0.0.3-SNAPSHOT"
 }

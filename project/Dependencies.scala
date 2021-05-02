@@ -5,15 +5,22 @@ object Dependencies {
 
   private[this] object akka {
     lazy val namespace   = "com.typesafe.akka"
-    lazy val actorTyped  = namespace                       %% "akka-actor-typed"            % akkaVersion
-    lazy val stream      = namespace                       %% "akka-stream"                 % akkaVersion
-    lazy val persistence = namespace                       %% "akka-persistence-typed"      % akkaVersion
-    lazy val sharding    = namespace                       %% "akka-cluster-sharding-typed" % akkaVersion
-    lazy val http        = namespace                       %% "akka-http"                   % akkaHttpVersion
-    lazy val httpJson    = namespace                       %% "akka-http-spray-json"        % akkaHttpVersion
-    lazy val httpJson4s  = "de.heikoseeberger"             %% "akka-http-json4s"            % httpJson4sVersion
-    lazy val management  = "com.lightbend.akka.management" %% "akka-management"             % akkaManagementVersion
-    lazy val slf4j       = namespace                       %% "akka-slf4j"                  % akkaVersion
+    lazy val actorTyped  = namespace                       %% "akka-actor-typed"             % akkaVersion
+    lazy val stream      = namespace                       %% "akka-stream"                  % akkaVersion
+    lazy val persistence = namespace                       %% "akka-persistence-typed"       % akkaVersion
+    lazy val s3Journal   = "com.github.j5ik2o"             %% "akka-persistence-s3-journal"  % s3Persistence
+    lazy val s3Snapshot  = "com.github.j5ik2o"             %% "akka-persistence-s3-snapshot" % s3Persistence
+    lazy val sharding    = namespace                       %% "akka-cluster-sharding-typed"  % akkaVersion
+    lazy val http        = namespace                       %% "akka-http"                    % akkaHttpVersion
+    lazy val httpJson    = namespace                       %% "akka-http-spray-json"         % akkaHttpVersion
+    lazy val httpJson4s  = "de.heikoseeberger"             %% "akka-http-json4s"             % httpJson4sVersion
+    lazy val management  = "com.lightbend.akka.management" %% "akka-management"              % akkaManagementVersion
+    lazy val slf4j       = namespace                       %% "akka-slf4j"                   % akkaVersion
+  }
+
+  private[this] object awssdk {
+    lazy val namespace = "software.amazon.awssdk"
+    lazy val s3        = namespace % "s3" % awsSdkVersion
   }
 
   lazy val Protobuf  = "protobuf"
@@ -61,6 +68,8 @@ object Dependencies {
       //
       akka.actorTyped              % Compile,
       akka.persistence             % Compile,
+      akka.s3Journal               % Compile,
+      akka.s3Snapshot              % Compile,
       akka.sharding                % Compile,
       akka.stream                  % Compile,
       akka.http                    % Compile,
@@ -72,7 +81,6 @@ object Dependencies {
       kamon.bundle                 % Compile,
       kamon.prometheus             % Compile,
       scalaprotobuf.core           % Protobuf,
-      "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Compile,
       scalatest.core               % Test,
       mockito.core                 % Test
     )

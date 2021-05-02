@@ -65,7 +65,7 @@ object PetPersistentBehavior {
       case PetDeleted(petId) => state.delete(petId)
     }
 
-  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Pet")
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("pdnd-uservice-rest-template-persistence-pet")
 
   def apply(entityId: String, persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
@@ -75,7 +75,7 @@ object PetPersistentBehavior {
         emptyState = State.empty,
         commandHandler = commandHandler,
         eventHandler = eventHandler
-      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 100, keepNSnapshots = 1))
+      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 5, keepNSnapshots = 1))
         .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
     }
   }

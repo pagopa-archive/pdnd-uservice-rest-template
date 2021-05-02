@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
-// Enabled in application.conf
+// Enabled in reference.conf
 class HealthCheck() extends (() => Future[Boolean]) {
 
   private val log = LoggerFactory.getLogger(getClass)
