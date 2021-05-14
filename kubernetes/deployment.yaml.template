@@ -2,39 +2,47 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: {{name}}-app
-  name: {{name}}-app
+    app: {{name}}
+  name: {{name}}
   namespace: {{name}}
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      app: {{name}}-app
+      app: {{name}}
   template:
     metadata:
       labels:
-        app: {{name}}-app
+        app: {{name}}
+        actorSystemName: {{name}}
     spec:
       imagePullSecrets:
         - name: regcred
+      volumes:
+        - name: application-conf
+          secret:
+            secretName: application.conf
+            defaultMode: 420
       containers:
         - name: {{name}}
-          image: gateway.pdnd.dev/services/{{name}}:{{version}}
+          image: gateway.private.pdnd.pagopa.it/services/{{name}}:{{version}}
+          command: ["bin/pdnd-uservice-rest-template"]
+          args: ["-Dconfig.file=etc/application.conf", "-Dconfig.override_with_env_vars=true"]
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
               path: /ready
               port: management
             periodSeconds: 10
-            failureThreshold: 3
-            initialDelaySeconds: 10
+            failureThreshold: 5
+            initialDelaySeconds: 30
           livenessProbe:
             httpGet:
               path: "/alive"
               port: management
             periodSeconds: 10
             failureThreshold: 5
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
           ports:
             - name: management
               containerPort: 8558
@@ -45,17 +53,29 @@ spec:
             - name: monitoring
               containerPort: 9095
               protocol: TCP
+          securityContext:
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
           env:
-            - name: VAULT_ADDR
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: vault
-                  key: VAULT_ADDR
-            - name: VAULT_TOKEN
+                  name: aws
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: vault
-                  key: VAULT_TOKEN
+                  name: aws
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: REQUIRED_CONTACT_POINT_NR
+              value: "3"
+          volumeMounts:
+            - name: application-conf
+              mountPath: /opt/docker/etc
 ---
 apiVersion: v1
 kind: Service
@@ -76,7 +96,32 @@ spec:
       protocol: TCP
       name: monitoring
   selector:
-    app: {{name}}-app
+    app: {{name}}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-reader
+  namespace: {{name}}
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+  namespace: {{name}}
+subjects:
+# Note the `name` line below. The first default refers to the namespace. The second refers to the service account name.
+# For instance, `name: system:serviceaccount:myns:default` would refer to the default service account in namespace `myns`
+- kind: User
+  name: system:serviceaccount:{{name}}:default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
@@ -84,14 +129,29 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-  name: {{name}}
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: gateway.private.pdnd.pagopa.it
+  name: ingress-{{name}}-cert
   namespace: {{name}}
 spec:
+  tls:
+  - hosts:
+    - gateway.private.pdnd.pagopa.it
+    secretName: gateway
   rules:
-    - http:
-        paths:
-          - path: /{{name}}
-            backend:
-              serviceName: {{name}}
-              servicePort: 8088
-
+  - host: gateway.private.pdnd.pagopa.it
+    http:
+      paths:
+        - path: /{{name}}
+          backend:
+            serviceName: {{name}}
+            servicePort: 8088
+        - path: /dataviz
+          backend:
+            serviceName: {{name}}
+            servicePort: 8088
+        - path: /apps
+          backend:
+            serviceName: {{name}}
+            servicePort: 8088

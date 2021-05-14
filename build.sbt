@@ -77,21 +77,21 @@ lazy val client = project
 lazy val root = (project in file("."))
   .settings(
     name := "pdnd-uservice-rest-template",
-    parallelExecution in Test := false,
+    Test / parallelExecution := false,
     dockerBuildOptions ++= Seq("--network=host"),
-    dockerRepository in Docker := Some(System.getenv("DOCKER_REPO")),
-    version in Docker := s"${
+    Docker / dockerRepository := Some(System.getenv("DOCKER_REPO")),
+    Docker / version := s"${
       val buildVersion = (version in ThisBuild).value
       if (buildVersion == "latest")
         buildVersion
       else
         s"v$buildVersion"
     }".toLowerCase,
-    packageName in Docker := s"services/${name.value}",
-    daemonUser in Docker := "daemon",
-    dockerExposedPorts in Docker := Seq(8080),
-    dockerBaseImage in Docker := "openjdk:8-jre-alpine",
-    dockerUpdateLatest in Docker := true,
+    Docker / packageName := s"services/${name.value}",
+    Docker / daemonUser := "daemon",
+    Docker / dockerExposedPorts := Seq(8080),
+    Docker / dockerBaseImage := "openjdk:8-jre-alpine",
+    Docker / dockerUpdateLatest := true,
     wartremoverErrors ++= Warts.all,
     wartremoverExcluded += sourceManaged.value
   )
