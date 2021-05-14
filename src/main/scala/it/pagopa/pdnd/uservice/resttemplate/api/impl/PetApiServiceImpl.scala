@@ -12,6 +12,7 @@ import it.pagopa.pdnd.uservice.resttemplate.common.system._
 import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence.PetPersistentBehavior.PetNotFoundException
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
@@ -23,6 +24,8 @@ import scala.concurrent.Future
   )
 )
 class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
+
+  private val log = LoggerFactory.getLogger(this.getClass.getName)
 
   private val sharding = ClusterSharding(system)
 
@@ -36,7 +39,9 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
     val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, pet.id.get)
     val result: Future[StatusReply[State]] = commander.ask(ref => AddPet(pet, ref))
     onSuccess(result) {
-      case statusReply if statusReply.isSuccess => addPet200
+      case statusReply if statusReply.isSuccess =>
+        log.error("ped added")
+        addPet200
       case statusReply if statusReply.isError   => addPet405
     }
   }
@@ -48,7 +53,9 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
     val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, petId)
     val result: Future[StatusReply[State]] = commander.ask(ref => DeletePet(petId, ref))
     onSuccess(result) {
-      case statusReply if statusReply.isSuccess => deletePet200
+      case statusReply if statusReply.isSuccess =>
+        log.error("pet deleted")
+        deletePet200
       case statusReply if statusReply.isError =>
         statusReply.getError match {
           case PetNotFoundException => deletePet404
@@ -65,7 +72,9 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
     val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, petId)
     val result: Future[StatusReply[Pet]] = commander.ask(ref => GetPet(petId, ref))
     onSuccess(result) {
-      case statusReply if statusReply.isSuccess => getPetById200(statusReply.getValue)
+      case statusReply if statusReply.isSuccess =>
+        log.error("pet returned")
+        getPetById200(statusReply.getValue)
       case statusReply if statusReply.isError =>
         statusReply.getError match {
           case PetNotFoundException => getPetById404

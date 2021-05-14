@@ -9,6 +9,7 @@ ThisBuild / libraryDependencies := Dependencies.Jars.`server`.map(m =>
   else
     m
 )
+ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
 ThisBuild / version := {
   Process("./version.sh").lineStream_!.head.replaceFirst("v", "")
 }
@@ -43,7 +44,7 @@ generateCode := {
 
 }
 
-PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value)
+Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value)
 
 cleanFiles += baseDirectory.value / "generated" / "src"
 
@@ -79,19 +80,19 @@ lazy val root = (project in file("."))
     name := "pdnd-uservice-rest-template",
     Test / parallelExecution := false,
     dockerBuildOptions ++= Seq("--network=host"),
-    Docker / dockerRepository := Some(System.getenv("DOCKER_REPO")),
+    dockerRepository := Some(System.getenv("DOCKER_REPO")),
+    dockerBaseImage := "adoptopenjdk:11-jre-hotspot",
+    dockerUpdateLatest := true,
+    daemonUser := "daemon",
     Docker / version := s"${
-      val buildVersion = (version in ThisBuild).value
+      val buildVersion = (ThisBuild / version).value
       if (buildVersion == "latest")
         buildVersion
       else
         s"v$buildVersion"
     }".toLowerCase,
     Docker / packageName := s"services/${name.value}",
-    Docker / daemonUser := "daemon",
     Docker / dockerExposedPorts := Seq(8080),
-    Docker / dockerBaseImage := "openjdk:8-jre-alpine",
-    Docker / dockerUpdateLatest := true,
     wartremoverErrors ++= Warts.all,
     wartremoverExcluded += sourceManaged.value
   )
