@@ -6,7 +6,7 @@ metadata:
   name: {{name}}
   namespace: {{name}}
 spec:
-  replicas: 3
+  replicas: 6
   selector:
     matchLabels:
       app: {{name}}

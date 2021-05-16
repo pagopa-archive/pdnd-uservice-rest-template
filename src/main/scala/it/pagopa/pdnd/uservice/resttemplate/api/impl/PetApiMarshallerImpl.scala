@@ -13,4 +13,8 @@ class PetApiMarshallerImpl extends PetApiMarshaller with SprayJsonSupport with D
     sprayJsonUnmarshaller[Pet](jsonFormat2(Pet))
 
   override implicit def toEntityMarshallerPet: ToEntityMarshaller[Pet] = sprayJsonMarshaller[Pet](jsonFormat2(Pet))
+
+  implicit val petFormat: RootJsonFormat[Pet] = jsonFormat2(Pet)
+
+  override implicit def toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]] = sprayJsonMarshaller
 }

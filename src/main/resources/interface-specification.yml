@@ -32,6 +32,21 @@ paths:
         405:
           description: Invalid input
           content: { }
+    get:
+      tags:
+        - pet
+      summary: Get all pets
+      description: Return the list of all the pets
+      operationId: listPets
+      responses:
+        200:
+          description: List of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
   /pet/{petId}:
     get:
       tags:

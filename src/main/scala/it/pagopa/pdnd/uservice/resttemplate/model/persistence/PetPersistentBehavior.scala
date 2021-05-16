@@ -46,6 +46,10 @@ object PetPersistentBehavior {
             Effect.none[Event, State]
         }
 
+      case List(replyTo) =>
+        replyTo ! StatusReply.Success(state)
+        Effect.none[Event, State]
+
       case GetPet(petId, replyTo) =>
         state.pets
           .get(petId) match {
@@ -69,13 +73,13 @@ object PetPersistentBehavior {
 
   def apply(entityId: String, persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
-      context.log.info("Starting Pet Shard", entityId)
+      context.log.error("Starting Pet Shard", entityId)
       EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
         emptyState = State.empty,
         commandHandler = commandHandler,
         eventHandler = eventHandler
-      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 5, keepNSnapshots = 1))
+      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 1000, keepNSnapshots = 1))
         .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
     }
   }
