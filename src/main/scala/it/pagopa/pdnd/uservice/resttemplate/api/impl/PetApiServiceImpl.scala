@@ -1,6 +1,7 @@
 package it.pagopa.pdnd.uservice.resttemplate.api.impl
 
 import akka.actor.typed.ActorSystem
+import akka.cluster.sharding.typed.ClusterShardingSettings
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onSuccess
@@ -17,33 +18,39 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 @SuppressWarnings(
   Array(
-    "org.wartremover.warts.ImplicitParameter",
-    "org.wartremover.warts.OptionPartial",
-    "org.wartremover.warts.NonUnitStatements",
-    "org.wartremover.warts.StringPlusAny"
+    "org.wartremover.warts.ImplicitParameter"
   )
 )
 class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
 
   private val sharding = ClusterSharding(system)
 
-  private val numberOfShards: Int = system.settings.config.getInt("akka.cluster.sharding.number-of-shards")
-
-  @inline private def getShard(id: String): String = (id.hashCode % numberOfShards).toString
-
-  sharding.init(Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
+  private val entity = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
     PetPersistentBehavior(entityContext.entityId, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
-  })
+  }
 
+  private val settings: ClusterShardingSettings = entity.settings match {
+    case None    => ClusterShardingSettings(system)
+    case Some(s) => s
+  }
+
+  @inline private def getShard(id: String): String = (id.hashCode % settings.numberOfShards).toString
+
+  locally {
+    val _ = sharding.init(entity)
+  }
   /** Code: 405, Message: Invalid input
     */
   override def addPet(pet: Pet): Route = {
-    val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(pet.id.get))
-    val result: Future[StatusReply[State]] = commander.ask(ref => AddPet(pet, ref))
-    onSuccess(result) {
-      case statusReply if statusReply.isSuccess =>
-        addPet200
-      case statusReply if statusReply.isError   => addPet405
+    pet.id.fold(addPet405){
+      id =>
+        val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(id))
+        val result: Future[StatusReply[State]] = commander.ask(ref => AddPet(pet, ref))
+        onSuccess(result) {
+          case statusReply if statusReply.isSuccess =>
+            addPet200
+          case statusReply if statusReply.isError   => addPet405
+        }
     }
   }
 
@@ -87,7 +94,7 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
    */
   override def listPets()(implicit toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]]): Route = {
     implicit val ec: ExecutionContextExecutor = system.executionContext
-    val commanders = (0 until numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
+    val commanders = (0 until settings.numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
     val futures: Seq[Future[Seq[Pet]]] = commanders.map(_.ask(ref => List(ref)).map(_.getValue.pets.values.toSeq))
     val result: Future[Seq[Pet]] = Future.sequence(futures).map(_.flatten)
     onSuccess(result) {

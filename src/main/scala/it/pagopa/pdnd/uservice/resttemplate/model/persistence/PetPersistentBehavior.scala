@@ -71,9 +71,9 @@ object PetPersistentBehavior {
 
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("pdnd-uservice-rest-template-persistence-pet")
 
-  def apply(entityId: String, persistenceId: PersistenceId): Behavior[Command] = {
+  def apply(petManagerId: String, persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
-      context.log.error("Starting Pet Shard", entityId)
+      context.log.error("Starting Pet Shard", petManagerId)
       EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
         emptyState = State.empty,
