@@ -14,7 +14,7 @@ import it.pagopa.pdnd.uservice.resttemplate.api.PetApi
 import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
 import it.pagopa.pdnd.uservice.resttemplate.common.system.Authenticator
 import it.pagopa.pdnd.uservice.resttemplate.server.Controller
-//import kamon.Kamon
+import kamon.Kamon
 
 import scala.jdk.CollectionConverters._
 
@@ -26,7 +26,7 @@ import scala.jdk.CollectionConverters._
 )
 object Main extends App {
 
-//  Kamon.init()
+  Kamon.init()
 
   locally {
     val _ = ActorSystem[Nothing](
