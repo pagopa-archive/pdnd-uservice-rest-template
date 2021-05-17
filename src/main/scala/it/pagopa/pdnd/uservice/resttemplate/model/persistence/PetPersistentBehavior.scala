@@ -1,8 +1,8 @@
 package it.pagopa.pdnd.uservice.resttemplate.model.persistence
 
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{Behavior, SupervisorStrategy}
-import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
@@ -15,7 +15,8 @@ object PetPersistentBehavior {
 
   final case object PetNotFoundException extends Throwable
 
-  val commandHandler: (State, Command) => Effect[Event, State] = { (state, command) =>
+  def commandHandler(shard: ActorRef[ClusterSharding.ShardCommand], context: ActorContext[Command]): (State, Command) => Effect[Event, State] = { (state, command) =>
+    context.setReceiveTimeout(1800.seconds, Idle)
     command match {
       case AddPet(newPet, replyTo) =>
         val pet = for {
@@ -60,6 +61,10 @@ object PetPersistentBehavior {
             replyTo ! StatusReply.Error[Pet](PetNotFoundException)
             Effect.none[Event, State]
         }
+
+      case Idle =>
+        shard ! ClusterSharding.Passivate(context.self)
+        Effect.none[Event, State]
     }
   }
 
@@ -71,15 +76,15 @@ object PetPersistentBehavior {
 
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("pdnd-uservice-rest-template-persistence-pet")
 
-  def apply(petManagerId: String, persistenceId: PersistenceId): Behavior[Command] = {
+  def apply(shard: ActorRef[ClusterSharding.ShardCommand], petManagerId: String, persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
       context.log.error("Starting Pet Shard", petManagerId)
       EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
         emptyState = State.empty,
-        commandHandler = commandHandler,
+        commandHandler = commandHandler(shard, context),
         eventHandler = eventHandler
-      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 1000, keepNSnapshots = 1))
+      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 10, keepNSnapshots = 1))
         .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
     }
   }

@@ -23,11 +23,11 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 )
 class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
 
-  private val sharding = ClusterSharding(system)
+  private val sharding: ClusterSharding = ClusterSharding(system)
 
   private val entity = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
-    PetPersistentBehavior(entityContext.entityId, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
-  }
+    PetPersistentBehavior(entityContext.shard, entityContext.entityId, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
+  }//.withStopMessage(GoodBye)
 
   private val settings: ClusterShardingSettings = entity.settings match {
     case None    => ClusterShardingSettings(system)
