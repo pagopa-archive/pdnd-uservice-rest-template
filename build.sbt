@@ -81,7 +81,7 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     dockerBuildOptions ++= Seq("--network=host"),
     dockerRepository := Some(System.getenv("DOCKER_REPO")),
-    dockerBaseImage := "adoptopenjdk:11-jre-hotspot",
+    dockerBaseImage := "adoptopenjdk:11-jdk-hotspot",
     dockerUpdateLatest := true,
     daemonUser := "daemon",
     Docker / version := s"${
@@ -98,4 +98,6 @@ lazy val root = (project in file("."))
   )
   .aggregate(client)
   .dependsOn(generated)
-  .enablePlugins(AshScriptPlugin, DockerPlugin)
+  .enablePlugins(JavaAppPackaging, JavaAgent)
+
+javaAgents += "io.kamon" % "kanela-agent" % "1.0.7"

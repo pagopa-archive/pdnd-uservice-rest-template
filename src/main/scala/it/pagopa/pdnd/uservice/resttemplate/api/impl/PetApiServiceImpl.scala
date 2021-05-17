@@ -27,7 +27,7 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
 
   private val entity = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
     PetPersistentBehavior(entityContext.shard, entityContext.entityId, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
-  }//.withStopMessage(GoodBye)
+  }
 
   private val settings: ClusterShardingSettings = entity.settings match {
     case None    => ClusterShardingSettings(system)

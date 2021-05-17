@@ -8,7 +8,8 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
 import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 
-import scala.concurrent.duration.DurationInt
+import java.time.temporal.ChronoUnit
+import scala.concurrent.duration.{DurationInt, DurationLong}
 import scala.language.postfixOps
 
 object PetPersistentBehavior {
@@ -16,7 +17,8 @@ object PetPersistentBehavior {
   final case object PetNotFoundException extends Throwable
 
   def commandHandler(shard: ActorRef[ClusterSharding.ShardCommand], context: ActorContext[Command]): (State, Command) => Effect[Event, State] = { (state, command) =>
-    context.setReceiveTimeout(1800.seconds, Idle)
+    val idleTimeout = context.system.settings.config.getDuration("pdnd-uservice-rest-template.idle-timeout")
+    context.setReceiveTimeout(idleTimeout.get(ChronoUnit.SECONDS) seconds, Idle)
     command match {
       case AddPet(newPet, replyTo) =>
         val pet = for {
@@ -64,6 +66,7 @@ object PetPersistentBehavior {
 
       case Idle =>
         shard ! ClusterSharding.Passivate(context.self)
+        context.log.error(s"Passivate shard: ${shard.path.name}")
         Effect.none[Event, State]
     }
   }
@@ -79,12 +82,13 @@ object PetPersistentBehavior {
   def apply(shard: ActorRef[ClusterSharding.ShardCommand], petManagerId: String, persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
       context.log.error("Starting Pet Shard", petManagerId)
+      val numberOfEvents = context.system.settings.config.getInt("pdnd-uservice-rest-template.number-of-events-before-snapshot")
       EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
         emptyState = State.empty,
         commandHandler = commandHandler(shard, context),
         eventHandler = eventHandler
-      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 10, keepNSnapshots = 1))
+      ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = numberOfEvents, keepNSnapshots = 1))
         .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
     }
   }
