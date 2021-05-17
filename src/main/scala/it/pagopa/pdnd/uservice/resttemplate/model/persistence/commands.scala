@@ -11,5 +11,3 @@ final case class DeletePet(petId: String, replyTo: ActorRef[StatusReply[State]])
 final case class GetPet(petId: String, replyTo: ActorRef[StatusReply[Pet]])      extends Command
 final case class List(replyTo: ActorRef[StatusReply[State]])                     extends Command
 case object      Idle                                                            extends Command
-//case object      GoodBye                                                         extends Command
-
