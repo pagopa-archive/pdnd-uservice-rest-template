@@ -8,7 +8,7 @@ import akka.cluster.typed.{Cluster, Subscribe}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
-import akka.management.javadsl.AkkaManagement
+import akka.management.scaladsl.AkkaManagement
 import akka.{actor => classic}
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApi
 import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
@@ -82,7 +82,7 @@ object Main extends App {
           classOf[ClusterEvent.MemberEvent]
         )
 
-        val _ = AkkaManagement.get(classicSystem).start()
+        val _ = AkkaManagement(classicSystem).start()
         ClusterBootstrap.get(classicSystem).start()
         Behaviors.empty
       }, "pdnd-uservice-rest-template")

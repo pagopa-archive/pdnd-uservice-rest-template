@@ -50,7 +50,11 @@ cleanFiles += baseDirectory.value / "generated" / "src"
 
 cleanFiles += baseDirectory.value / "client" / "src"
 
-lazy val generated = project.in(file("generated")).settings(scalacOptions := Seq())
+lazy val generated = project
+  .in(file("generated"))
+  .settings(
+    scalacOptions := Seq()
+  )
 
 lazy val client = project
   .in(file("client"))

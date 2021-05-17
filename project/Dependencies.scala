@@ -10,7 +10,6 @@ object Dependencies {
     lazy val clusterSharding        = namespace %% "akka-cluster-sharding-typed" % akkaVersion
     lazy val discovery              = namespace %% "akka-discovery" % akkaVersion
     lazy val persistence            = namespace %% "akka-persistence-typed" % akkaVersion
-    lazy val serialization          = namespace %% "akka-serialization-jackson" % akkaVersion
     lazy val s3Journal              = "com.github.j5ik2o" %% "akka-persistence-s3-journal" % s3Persistence
     lazy val s3Snapshot             = "com.github.j5ik2o" %% "akka-persistence-s3-snapshot" % s3Persistence
     lazy val stream                 = namespace %% "akka-stream-typed" % akkaVersion
@@ -38,6 +37,7 @@ object Dependencies {
   private[this] object json4s {
     lazy val namespace = "org.json4s"
     lazy val jackson   = namespace %% "json4s-jackson" % json4sVersion
+    lazy val ext       = namespace %% "json4s-ext" % json4sVersion
   }
 
   private[this] object jackson {
@@ -91,7 +91,6 @@ object Dependencies {
       akka.discoveryKubernetesApi  % Compile,
       akka.clusterBootstrap        % Compile,
       akka.persistence             % Compile,
-      akka.serialization           % Compile,
       akka.s3Journal               % Compile,
       akka.s3Snapshot              % Compile,
       akka.stream                  % Compile,
@@ -106,7 +105,12 @@ object Dependencies {
       scalaprotobuf.core           % Protobuf,
       scalatest.core               % Test
     )
-    lazy val client: Seq[ModuleID] =
-      Seq(akka.stream % Compile, akka.http % Compile, akka.httpJson4s % Compile, json4s.jackson % Compile)
+    lazy val client: Seq[ModuleID] = Seq(
+      akka.stream                  % Compile,
+      akka.http                    % Compile,
+      akka.httpJson4s              % Compile,
+      json4s.jackson               % Compile,
+      json4s.ext                   % Compile
+    )
   }
 }
