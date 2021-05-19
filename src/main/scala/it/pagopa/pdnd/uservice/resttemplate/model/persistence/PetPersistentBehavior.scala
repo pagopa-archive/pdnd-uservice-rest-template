@@ -79,9 +79,9 @@ object PetPersistentBehavior {
 
   val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("pdnd-uservice-rest-template-persistence-pet")
 
-  def apply(shard: ActorRef[ClusterSharding.ShardCommand], petManagerId: String, persistenceId: PersistenceId): Behavior[Command] = {
+  def apply(shard: ActorRef[ClusterSharding.ShardCommand], persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>
-      context.log.error("Starting Pet Shard", petManagerId)
+      context.log.error(s"Starting Pet Shard ${persistenceId.id}")
       val numberOfEvents = context.system.settings.config.getInt("pdnd-uservice-rest-template.number-of-events-before-snapshot")
       EventSourcedBehavior[Command, Event, State](
         persistenceId = persistenceId,
@@ -89,6 +89,7 @@ object PetPersistentBehavior {
         commandHandler = commandHandler(shard, context),
         eventHandler = eventHandler
       ).withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = numberOfEvents, keepNSnapshots = 1))
+        .withTagger(_ => Set(persistenceId.id))
         .onPersistFailure(SupervisorStrategy.restartWithBackoff(200 millis, 5 seconds, 0.1))
     }
   }

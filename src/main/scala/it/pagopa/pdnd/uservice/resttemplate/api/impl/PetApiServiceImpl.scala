@@ -26,7 +26,7 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
   private val sharding: ClusterSharding = ClusterSharding(system)
 
   private val entity = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
-    PetPersistentBehavior(entityContext.shard, entityContext.entityId, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
+    PetPersistentBehavior(entityContext.shard, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
   }
 
   private val settings: ClusterShardingSettings = entity.settings match {
@@ -39,6 +39,7 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
   locally {
     val _ = sharding.init(entity)
   }
+
   /** Code: 405, Message: Invalid input
     */
   override def addPet(pet: Pet): Route = {
