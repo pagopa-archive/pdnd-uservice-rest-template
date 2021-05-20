@@ -25,7 +25,7 @@ spec:
             defaultMode: 420
       containers:
         - name: {{name}}
-          image: gateway.private.pdnd.pagopa.it/services/{{name}}:{{version}}
+          image: {{repository}}/services/{{name}}:{{version}}
           command: ["bin/pdnd-uservice-rest-template"]
           args: ["-Dconfig.file=etc/application.conf", "-Dconfig.override_with_env_vars=true"]
           imagePullPolicy: Always
@@ -67,6 +67,16 @@ spec:
                 secretKeyRef:
                   name: aws
                   key: AWS_SECRET_ACCESS_KEY
+            - name: CASSANDRA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cassandra
+                  key: CASSANDRA_USER
+            - name: CASSANDRA_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: cassandra
+                  key: CASSANDRA_PWD
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

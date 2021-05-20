@@ -10,6 +10,8 @@ object Dependencies {
     lazy val clusterSharding        = namespace %% "akka-cluster-sharding-typed" % akkaVersion
     lazy val discovery              = namespace %% "akka-discovery" % akkaVersion
     lazy val persistence            = namespace %% "akka-persistence-typed" % akkaVersion
+    lazy val clusterTools           = namespace %% "akka-cluster-tools" % akkaVersion
+    lazy val cassandraPersistence   = namespace %% "akka-persistence-cassandra" % cassandraPersistenceVersion
     lazy val s3Journal              = "com.github.j5ik2o" %% "akka-persistence-s3-journal" % s3Persistence
     lazy val s3Snapshot             = "com.github.j5ik2o" %% "akka-persistence-s3-snapshot" % s3Persistence
     lazy val stream                 = namespace %% "akka-stream-typed" % akkaVersion
@@ -90,7 +92,9 @@ object Dependencies {
       akka.discovery               % Compile,
       akka.discoveryKubernetesApi  % Compile,
       akka.clusterBootstrap        % Compile,
+      akka.clusterTools            % Compile,
       akka.persistence             % Compile,
+      akka.cassandraPersistence               % Compile,
       akka.s3Journal               % Compile,
       akka.s3Snapshot              % Compile,
       akka.stream                  % Compile,
