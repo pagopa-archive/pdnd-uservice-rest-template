@@ -1,13 +1,12 @@
 package it.pagopa.pdnd.uservice.resttemplate.api.impl
 
 import akka.actor.typed.ActorSystem
-import akka.cluster.sharding.typed.ClusterShardingSettings
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
+import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onSuccess
 import akka.http.scaladsl.server.Route
 import akka.pattern.StatusReply
-import akka.persistence.typed.PersistenceId
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApiService
 import it.pagopa.pdnd.uservice.resttemplate.common.system._
 import it.pagopa.pdnd.uservice.resttemplate.model.Pet
@@ -21,13 +20,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
     "org.wartremover.warts.ImplicitParameter"
   )
 )
-class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
-
-  private val sharding: ClusterSharding = ClusterSharding(system)
-
-  private val entity = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
-    PetPersistentBehavior(entityContext.shard, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
-  }
+class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entity: Entity[Command, ShardingEnvelope[Command]]) extends PetApiService {
 
   private val settings: ClusterShardingSettings = entity.settings match {
     case None    => ClusterShardingSettings(system)
@@ -35,10 +28,6 @@ class PetApiServiceImpl(system: ActorSystem[_]) extends PetApiService {
   }
 
   @inline private def getShard(id: String): String = (id.hashCode % settings.numberOfShards).toString
-
-  locally {
-    val _ = sharding.init(entity)
-  }
 
   /** Code: 405, Message: Invalid input
     */

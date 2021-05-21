@@ -4,17 +4,22 @@ import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.ClusterEvent
+import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, ShardedDaemonProcess}
 import akka.cluster.typed.{Cluster, Subscribe}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.scaladsl.AkkaManagement
+import akka.persistence.typed.PersistenceId
+import akka.projection.ProjectionBehavior
 import akka.{actor => classic}
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApi
 import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
 import it.pagopa.pdnd.uservice.resttemplate.common.system.Authenticator
+import it.pagopa.pdnd.uservice.resttemplate.model.persistence.{Command, PetPersistentBehavior, PetPersistentProjection}
 import it.pagopa.pdnd.uservice.resttemplate.server.Controller
-import kamon.Kamon
+//import kamon.Kamon
 
 import scala.jdk.CollectionConverters._
 
@@ -26,7 +31,7 @@ import scala.jdk.CollectionConverters._
 )
 object Main extends App {
 
-  Kamon.init()
+  //Kamon.init()
 
   locally {
     val _ = ActorSystem[Nothing](
@@ -40,8 +45,29 @@ object Main extends App {
           "Started [" + context.system + "], cluster.selfAddress = " + cluster.selfMember.address + ")"
         )
 
+        val sharding: ClusterSharding = ClusterSharding(context.system)
+
+        val petPersistentEntity: Entity[Command, ShardingEnvelope[Command]] = Entity(typeKey = PetPersistentBehavior.TypeKey) { entityContext =>
+          PetPersistentBehavior(entityContext.shard, PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
+        }
+
+        val _ = sharding.init(petPersistentEntity)
+
+        val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
+
+        val settings: ClusterShardingSettings = petPersistentEntity.settings match {
+          case None    => ClusterShardingSettings(context.system)
+          case Some(s) => s
+        }
+
+        ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
+          name = "pet-projections",
+          numberOfInstances = settings.numberOfShards,
+          behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
+          stopMessage = ProjectionBehavior.Stop)
+
         val petApi = new PetApi(
-          new PetApiServiceImpl(context.system),
+          new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
           new PetApiMarshallerImpl(),
           SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator)
         )
