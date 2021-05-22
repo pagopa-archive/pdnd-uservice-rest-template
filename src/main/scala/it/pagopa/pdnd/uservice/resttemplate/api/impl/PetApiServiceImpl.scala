@@ -35,7 +35,7 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
     pet.id.fold(addPet405){
       id =>
         val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(id))
-        val result: Future[StatusReply[State]] = commander.ask(ref => AddPet(pet, ref))
+        val result: Future[StatusReply[String]] = commander.ask(ref => AddPet(pet, ref))
         onSuccess(result) {
           case statusReply if statusReply.isSuccess =>
             addPet200
@@ -49,7 +49,7 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
     */
   override def deletePet(petId: String): Route = {
     val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
-    val result: Future[StatusReply[State]] = commander.ask(ref => DeletePet(petId, ref))
+    val result: Future[StatusReply[String]] = commander.ask(ref => DeletePet(petId, ref))
     onSuccess(result) {
       case statusReply if statusReply.isSuccess =>
         deletePet200
