@@ -49,8 +49,8 @@ object PetPersistentBehavior {
             Effect.none[Event, State]
         }
 
-      case List(replyTo) =>
-        replyTo ! StatusReply.Success(state)
+      case List(from: Int, until: Int, replyTo) =>
+        replyTo ! StatusReply.Success(state.pets.values.toSeq.slice(from, until))
         Effect.none[Event, State]
 
       case GetPet(petId, replyTo) =>

@@ -7,7 +7,7 @@ import scala.concurrent.duration.DurationInt
 
 package object system {
 
-  implicit val timeout: Timeout = 30.seconds
+  implicit val timeout: Timeout = 300.seconds
 
   object Authenticator extends Authenticator[Unit] {
     override def apply(credentials: Credentials): Option[Unit] = Some(())

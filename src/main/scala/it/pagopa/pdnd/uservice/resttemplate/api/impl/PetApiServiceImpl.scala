@@ -1,7 +1,7 @@
 package it.pagopa.pdnd.uservice.resttemplate.api.impl
 
 import akka.actor.typed.ActorSystem
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityRef}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onSuccess
@@ -13,11 +13,15 @@ import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence.PetPersistentBehavior.PetNotFoundException
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence._
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 @SuppressWarnings(
   Array(
-    "org.wartremover.warts.ImplicitParameter"
+    "org.wartremover.warts.ImplicitParameter",
+    "org.wartremover.warts.Any",
+    "org.wartremover.warts.Nothing",
+    "org.wartremover.warts.Recursion"
   )
 )
 class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entity: Entity[Command, ShardingEnvelope[Command]]) extends PetApiService {
@@ -83,13 +87,16 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
    * Code: 200, Message: List of pets, DataType: Seq[Pet]
    */
   override def listPets()(implicit toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]]): Route = {
-    implicit val ec: ExecutionContextExecutor = system.executionContext
-    val commanders = (0 until settings.numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
-    val futures: Seq[Future[Seq[Pet]]] = commanders.map(_.ask(ref => List(ref)).map(_.getValue.pets.values.toSeq))
-    val result: Future[Seq[Pet]] = Future.sequence(futures).map(_.flatten)
-    onSuccess(result) {
-      case pets: Seq[Pet] =>
-        listPets200(pets)
+    val sliceSize = 100
+    def getSlice(commander: EntityRef[Command], from: Int, to: Int): LazyList[Pet] = {
+      val slice: Seq[Pet] = Await.result(commander.ask(ref => List(from, to, ref)), Duration.Inf).getValue
+      if(slice.isEmpty)
+        LazyList.empty[Pet]
+      else
+        getSlice(commander, to, to + sliceSize) #::: slice.to(LazyList)
     }
+    val commanders: Seq[EntityRef[Command]] = (0 until settings.numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
+    val pets = commanders.flatMap(ref => getSlice(ref, 0, sliceSize))
+    listPets200(pets)
   }
 }
