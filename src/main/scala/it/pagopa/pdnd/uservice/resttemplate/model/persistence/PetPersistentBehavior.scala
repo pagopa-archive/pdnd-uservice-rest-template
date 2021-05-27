@@ -28,13 +28,13 @@ object PetPersistentBehavior {
 
         pet
           .map { _ =>
-            replyTo ! StatusReply.Error[State](s"Pet ${newPet.id.getOrElse("UNKNOWN")} already exists")
+            replyTo ! StatusReply.Error[String](s"Pet ${newPet.id.getOrElse("UNKNOWN")} already exists")
             Effect.none[PetAdded, State]
           }
           .getOrElse {
             Effect
               .persist(PetAdded(newPet))
-              .thenRun(s => replyTo ! StatusReply.Success(s))
+              .thenRun((_: State) => replyTo ! StatusReply.Success(newPet.id.getOrElse("UNKNOWN")))
           }
 
       case DeletePet(petId, replyTo) =>
@@ -43,14 +43,14 @@ object PetPersistentBehavior {
           case Some(_) =>
             Effect
               .persist(PetDeleted(petId))
-              .thenRun(state => replyTo ! StatusReply.Success(state))
+              .thenRun(_ => replyTo ! StatusReply.Success(petId))
           case None =>
-            replyTo ! StatusReply.Error[State](PetNotFoundException)
+            replyTo ! StatusReply.Error[String](PetNotFoundException)
             Effect.none[Event, State]
         }
 
-      case List(replyTo) =>
-        replyTo ! StatusReply.Success(state)
+      case List(from: Int, until: Int, replyTo) =>
+        replyTo ! StatusReply.Success(state.pets.values.toSeq.slice(from, until))
         Effect.none[Event, State]
 
       case GetPet(petId, replyTo) =>

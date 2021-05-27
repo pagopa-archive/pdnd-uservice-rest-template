@@ -24,6 +24,4 @@
 
 build.sbt
 project/plugins.sbt
-
-
-
+project/build.properties
