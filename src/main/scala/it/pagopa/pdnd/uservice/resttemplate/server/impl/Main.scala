@@ -58,14 +58,13 @@ object Main extends App {
           case Some(s) => s
         }
 
-        if(settings.numberOfShards > 1) {
-          val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
-          ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
-            name = "pet-projections",
-            numberOfInstances = settings.numberOfShards,
-            behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
-            stopMessage = ProjectionBehavior.Stop)
-        }
+        val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
+
+        ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
+          name = "pet-projections",
+          numberOfInstances = settings.numberOfShards,
+          behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
+          stopMessage = ProjectionBehavior.Stop)
 
         val petApi = new PetApi(
           new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
