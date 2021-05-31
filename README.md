@@ -78,3 +78,7 @@ at this point you can create 1000 objects (Pet):
 do
 echo $i ; curl -X POST "http://127.0.0.1:8088/pdnd-uservice-rest-template/v1/pet" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"id\":\"$i\",\"name\":\"CICCIO$i\"}"
 done
+
+You can also access the Swagger UI at: 
+
+`http://127.0.0.1:8088/pdnd-uservice-rest-template/v1/swagger-ui/index.html#/pet/addPet`
