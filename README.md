@@ -20,6 +20,7 @@ Combining all those modules, this microservice provides the following features:
  3. Each shard is automatically associated with a cluster node.
  4. The shards are automatically redistributed in case of cluster shrinking or expanding.
  5. Each shard is associated with independent journal and snapshot store.
+ 6. For each shard, a stream of event is generated for feeding an external database (projection)
 
 These features collectively make the microservice able to scale to manage the persistence of millions of objects in memory,
 and to evenly distribute the client requests among all the cluster nodes.
@@ -47,14 +48,35 @@ there are the following files:
 
 	The Akka reference configuration file for a single node cluster and the in-memory journal
 
-sbt packageXzTarball
+## How to make running the standalone version
 
-tar -zxvf target/universal/pdnd-uservice-rest-template-latest.txz
+You need to have installed:
+* [sbt](https://www.scala-sbt.org/) version 1.5.2
+* [openapi-generator](https://github.com/OpenAPITools/openapi-generator)
 
-export CASSANDRA_USER=cassandra
+Clone the project: 
 
-export CASSANDRA_PWD=cassandra
+`git clone https://github.com/pagopa/pdnd-uservice-rest-template.git`
 
-./pdnd-uservice-rest-template-latest/bin/pdnd-uservice-rest-template -Dconfig.resource=reference-standalone.conf
+then, run the following commands:
 
-http://localhost:8088/pdnd-uservice-rest-template/v1/swagger-ui/index.html
+`cd pdnd-uservice-rest-template`
+
+`sbt packageXzTarball`
+
+`tar -zxvf target/universal/pdnd-uservice-rest-template-latest.txz`
+
+`export CASSANDRA_USER=cassandra`
+
+`export CASSANDRA_PWD=cassandra`
+
+`./pdnd-uservice-rest-template-latest/bin/pdnd-uservice-rest-template -Dconfig.resource=reference-standalone.conf`
+
+at this point you can create 1000 objects (Pet):
+
+`
+for ((i=0; i<1000; ++i))
+do
+echo $i ; curl -X POST "http://127.0.0.1:8088/pdnd-uservice-rest-template/v1/pet" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"id\":\"$i\",\"name\":\"CICCIO$i\"}"
+done
+`
