@@ -19,7 +19,7 @@ import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetA
 import it.pagopa.pdnd.uservice.resttemplate.common.system.Authenticator
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence.{Command, PetPersistentBehavior, PetPersistentProjection}
 import it.pagopa.pdnd.uservice.resttemplate.server.Controller
-//import kamon.Kamon
+import kamon.Kamon
 
 import scala.jdk.CollectionConverters._
 
@@ -31,7 +31,7 @@ import scala.jdk.CollectionConverters._
 )
 object Main extends App {
 
-  //Kamon.init()
+  Kamon.init()
 
   locally {
     val _ = ActorSystem[Nothing](
@@ -53,18 +53,19 @@ object Main extends App {
 
         val _ = sharding.init(petPersistentEntity)
 
-        val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
-
         val settings: ClusterShardingSettings = petPersistentEntity.settings match {
           case None    => ClusterShardingSettings(context.system)
           case Some(s) => s
         }
 
-        ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
-          name = "pet-projections",
-          numberOfInstances = settings.numberOfShards,
-          behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
-          stopMessage = ProjectionBehavior.Stop)
+        if(settings.numberOfShards > 1) {
+          val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
+          ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
+            name = "pet-projections",
+            numberOfInstances = settings.numberOfShards,
+            behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
+            stopMessage = ProjectionBehavior.Stop)
+        }
 
         val petApi = new PetApi(
           new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
