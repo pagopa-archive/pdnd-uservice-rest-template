@@ -74,9 +74,7 @@ then, run the following commands:
 
 at this point you can create 1000 objects (Pet):
 
-`
-for ((i=0; i<1000; ++i))
+> for ((i=0; i<1000; ++i))
 do
 echo $i ; curl -X POST "http://127.0.0.1:8088/pdnd-uservice-rest-template/v1/pet" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"id\":\"$i\",\"name\":\"CICCIO$i\"}"
 done
-`
