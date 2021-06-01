@@ -26,11 +26,13 @@ These features collectively make the microservice able to scale to manage the pe
 and to evenly distribute the client requests among all the cluster nodes.
 The state's persistence and reliability is guaranteed by the powerful event sourcing mechanism provided by [Akka Persistence](https://doc.akka.io/docs/akka/current/typed/persistence.html).
 
+This project shows, as well, how to version the events in the journal, using [protobuf](https://developers.google.com/protocol-buffers) as a serialization mechanism.
+
 This project provides everything is needed to deploy on Kubernetes with [Cassandra](https://doc.akka.io/docs/akka-persistence-cassandra/current/) as the persistence storage. It's also possible to run it in standalone mode with the in-memory journal.
 
 ## Project Structure
 
-under:
+Under:
 `src/main/resources`
 
 there are the following files:
@@ -47,6 +49,19 @@ there are the following files:
 * reference-standalone.conf
 
 	The Akka reference configuration file for a single node cluster and the in-memory journal
+	
+
+The code generation phase, triggered under sbt with the generateCode command, generates code under two directories:
+
+*   generated
+
+	It contains all the server-side generated code.
+
+*   client
+
+	It contains the generated code for the client-side. This code is also published as a dependency, and it allows the interaction with the microservice using pure Scala code.
+	
+
 
 ## How to make running the standalone version
 
