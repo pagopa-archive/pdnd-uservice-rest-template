@@ -53,11 +53,11 @@ there are the following files:
 
 The code generation phase, triggered under sbt with the generateCode command, generates code under two directories:
 
-*   generated
+*   `generated`
 
 	It contains all the server-side generated code.
 
-*   client
+*   `client`
 
 	It contains the generated code for the client-side. This code is also published as a dependency, and it allows the interaction with the microservice using pure Scala code.
 
@@ -67,7 +67,7 @@ The directory:
 
 contains two sub-directories:
 
-*   `scala-akka\-http\-client`
+*   `scala-akka-http-client`
 *   `scala-akka-http-server`
 
 Those directories contain some [mustache](https://mustache.github.io/) templates you can use for customizing the generated code.
