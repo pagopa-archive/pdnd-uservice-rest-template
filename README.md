@@ -60,8 +60,23 @@ The code generation phase, triggered under sbt with the generateCode command, ge
 *   client
 
 	It contains the generated code for the client-side. This code is also published as a dependency, and it allows the interaction with the microservice using pure Scala code.
-	
 
+The directory:
+
+`templates`
+
+contains two sub-directories:
+
+*   `scala-akka\-http\-client`
+*   `scala-akka-http-server`
+
+Those directories contain some [mustache](https://mustache.github.io/) templates you can use for customizing the generated code.
+
+For example, in the scala-akka\-http\-server there is a template: 
+
+`controller.mustache`
+
+It shows how to intercept any http invocation/request and pass it through the [openapi4j](https://github.com/openapi4j/openapi4j) validation function. In this way it's possible to validate the payload against the full openapi specification before reaching the user-defined code.
 
 ## How to make running the standalone version
 
