@@ -58,13 +58,16 @@ object Main extends App {
           case Some(s) => s
         }
 
-        val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
+        val persistence = classicSystem.classicSystem.settings.config.getString("pdnd-uservice-rest-template.persistence")
+        if(persistence == "cassandra") {
+          val petPersistentProjection = new PetPersistentProjection(context.system, petPersistentEntity)
 
-        ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
-          name = "pet-projections",
-          numberOfInstances = settings.numberOfShards,
-          behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
-          stopMessage = ProjectionBehavior.Stop)
+          ShardedDaemonProcess(context.system).init[ProjectionBehavior.Command](
+            name = "pet-projections",
+            numberOfInstances = settings.numberOfShards,
+            behaviorFactory = (i: Int) => ProjectionBehavior(petPersistentProjection.projections(i)),
+            stopMessage = ProjectionBehavior.Stop)
+        }
 
         val petApi = new PetApi(
           new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
