@@ -4,6 +4,8 @@ object Versions {
   lazy val awsSdkVersion               = "2.4.17"
   lazy val projectionVersion           = "1.2.1"
   lazy val cassandraPersistenceVersion = "1.0.5"
+  lazy val jdbcPersistenceVersion      = "5.0.1"
+  lazy val slickVersion                = "3.3.3"
   lazy val s3Persistence               = "1.0.27"
   lazy val httpJson4sVersion           = "1.36.0"
   lazy val akkaManagementVersion       = "1.0.10"

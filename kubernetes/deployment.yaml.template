@@ -67,6 +67,11 @@ spec:
                 secretKeyRef:
                   name: aws
                   key: AWS_SECRET_ACCESS_KEY
+            - name: CASSANDRA_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: cassandra
+                  key: CASSANDRA_HOST
             - name: CASSANDRA_USER
               valueFrom:
                 secretKeyRef:
