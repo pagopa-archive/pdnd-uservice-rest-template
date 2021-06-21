@@ -10,8 +10,10 @@ popd  > /dev/null
 
 NAMESPACE=$(source $SCRIPT_PATH/config; echo $name)
 
-$SCRIPT_PATH/templater.sh $SCRIPT_PATH/deployment.yaml.template -s -f $SCRIPT_PATH/config > $SCRIPT_PATH/deployment.yaml
+CHECK=$(kubectl get namespaces | grep $NAMESPACE | awk -F' ' '{ print $1 }')
 
-kubectl delete -f $SCRIPT_PATH/deployment.yaml
-
-kubectl delete namespace $NAMESPACE && rm -rf $SCRIPT_PATH/deployment.yaml
+if  ([ "${CHECK}" == "${NAMESPACE}" ]) then
+  $SCRIPT_PATH/templater.sh $SCRIPT_PATH/deployment.yaml.template -s -f $SCRIPT_PATH/config > $SCRIPT_PATH/deployment.yaml
+  kubectl delete -f $SCRIPT_PATH/deployment.yaml
+  kubectl delete namespace $NAMESPACE && rm -rf $SCRIPT_PATH/deployment.yaml
+fi
