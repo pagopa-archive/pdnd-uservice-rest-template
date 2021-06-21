@@ -77,7 +77,7 @@ object PetPersistentBehavior {
       case PetDeleted(petId) => state.delete(petId)
     }
 
-  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("pdnd-uservice-rest-template-persistence-pet")
+  val TypeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("uservice-rest-template-persistence-pet")
 
   def apply(shard: ActorRef[ClusterSharding.ShardCommand], persistenceId: PersistenceId): Behavior[Command] = {
     Behaviors.setup { context =>

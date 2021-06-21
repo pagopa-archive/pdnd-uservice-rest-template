@@ -53,7 +53,7 @@ class PetPersistentProjection(system: ActorSystem[_], entity: Entity[Command, Sh
 
   val projections: Seq[AtLeastOnceFlowProjection[Offset, EventEnvelope[Event]]] = (0 until settings.numberOfShards).map(
     i =>
-      projection(s"pdnd-uservice-rest-template-persistence-pet|$i")
+      projection(s"uservice-rest-template-persistence-pet|$i")
   )
 
 }
