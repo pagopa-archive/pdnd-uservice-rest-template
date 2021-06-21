@@ -96,11 +96,7 @@ then, run the following commands:
 
 `tar -zxvf target/universal/pdnd-uservice-rest-template-latest.txz`
 
-`export CASSANDRA_USER=cassandra`
-
-`export CASSANDRA_PWD=cassandra`
-
-`./pdnd-uservice-rest-template-latest/bin/pdnd-uservice-rest-template -Dconfig.resource=reference-standalone.conf`
+`./pdnd-uservice-rest-template-latest/bin/pdnd-uservice-rest-template -Dconfig.resource=application-standalone.conf`
 
 at this point you can create 1000 objects (Pet):
 
