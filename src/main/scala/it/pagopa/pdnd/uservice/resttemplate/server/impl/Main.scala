@@ -1,19 +1,22 @@
 package it.pagopa.pdnd.uservice.resttemplate.server.impl
 
-import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.ClusterEvent
-import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, ShardedDaemonProcess}
+import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.{Cluster, Subscribe}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
+import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import akka.persistence.typed.PersistenceId
 import akka.projection.ProjectionBehavior
 import akka.{actor => classic}
+import io.github.resilience4j.ratelimiter.{RateLimiter, RateLimiterConfig, RateLimiterRegistry, RequestNotPermitted}
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApi
 import it.pagopa.pdnd.uservice.resttemplate.api.impl.{PetApiMarshallerImpl, PetApiServiceImpl}
 import it.pagopa.pdnd.uservice.resttemplate.common.system.Authenticator
@@ -21,6 +24,7 @@ import it.pagopa.pdnd.uservice.resttemplate.model.persistence.{Command, PetPersi
 import it.pagopa.pdnd.uservice.resttemplate.server.Controller
 import kamon.Kamon
 
+import java.time.Duration
 import scala.jdk.CollectionConverters._
 
 @SuppressWarnings(
@@ -69,10 +73,30 @@ object Main extends App {
             stopMessage = ProjectionBehavior.Stop)
         }
 
+        val config = RateLimiterConfig.custom()
+          .limitRefreshPeriod(Duration.ofMillis(10000))
+          .limitForPeriod(10)
+          .timeoutDuration(Duration.ofMillis(60000))
+          .build()
+
+        val rateLimiterRegistry = RateLimiterRegistry.of(config)
+
+        val rateLimiterWithDefaultConfig = rateLimiterRegistry.rateLimiter("name1")
+
+        def throttle: Directive[Unit] = Directive[Unit] { inner => ctx =>
+          try {
+            RateLimiter.waitForPermission(rateLimiterWithDefaultConfig)
+            inner(())(ctx)
+          } catch {
+            case _: RequestNotPermitted =>
+              complete(StatusCodes.TooManyRequests)(ctx)
+          }
+        }
+
         val petApi = new PetApi(
           new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
           new PetApiMarshallerImpl(),
-          SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator)
+          throttle & SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator)
         )
 
         val _ = AkkaManagement.get(classicSystem).start()

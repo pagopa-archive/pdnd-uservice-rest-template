@@ -76,6 +76,11 @@ object Dependencies {
     lazy val operationValidator = namespace % "openapi-operation-validator" % openapi4jVersion
   }
 
+  private[this] object resilience4j {
+    lazy val namespace   = "io.github.resilience4j"
+    lazy val rateLimiter = namespace % "resilience4j-ratelimiter" % resilience4jVersion
+  }
+
   private[this] object scalatest {
     lazy val namespace = "org.scalatest"
     lazy val core      = namespace %% "scalatest" % scalatestVersion
@@ -122,6 +127,7 @@ object Dependencies {
       logback.classic              % Compile,
       akka.slf4j                   % Compile,
       openapi4j.operationValidator % Compile,
+      resilience4j.rateLimiter     % Compile,
       kamon.bundle                 % Compile,
       kamon.prometheus             % Compile,
       scalaprotobuf.core           % Protobuf,
