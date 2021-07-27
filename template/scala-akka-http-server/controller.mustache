@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 {{/operations}}{{/apis}}{{/apiInfo}}
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
+import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest}
 import akka.stream.scaladsl.Sink
 import org.openapi4j.core.validation.ValidationException
 import org.openapi4j.operation.validator.model.Request.Method
@@ -16,6 +16,7 @@ import org.openapi4j.parser.OpenApi3Parser
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 import java.io.{File, FileOutputStream}
@@ -53,9 +54,8 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
             case _ =>
               Method.GET
           })
-          val entity = Await.result(httpRequest.entity.dataBytes.map(_.utf8String).runWith(Sink.seq), Duration.Inf).headOption
-
-          val contentType = httpRequest.entity.getContentType().toString
+          val entity = httpRequest.entity.asInstanceOf[HttpEntity.Strict]
+          val contentType = entity.getContentType().toString
           val requestHeaders = ("Content-Type", contentType) :: httpRequest.
             headers.
             map(
@@ -66,9 +66,7 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
 
           val headers = (("Content-Type", contentType) :: requestHeaders).map(p => (p._1, Seq(p._2).asJava: java.util.Collection[String])).toMap.asJava
 
-          val validatingRequest = entity.
-            fold(builder)(entity => builder.body(Body.from(entity))).
-            headers(headers).build()
+          val validatingRequest = builder.body(Body.from(entity.data.utf8String)).headers(headers).build()
             Try(validator.validate(validatingRequest)) match {
                case Failure(e: ValidationException) =>
                  validationExceptionToRoute.fold[Route](complete((400, e.getMessage)))(_ (e))
@@ -81,12 +79,14 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
       }
 
   lazy val routes: Route = pathPrefix("{{projectName}}" / "{{appVersion}}") {
-    extractRequest {
-      request =>
-        validationFunction(request){
-          {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
-      }
-    } ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
+    toStrictEntity(15.seconds) {
+      extractRequest {
+        request =>
+          validationFunction(request){
+            {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
+        }
+      } ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
+    }
   }
 
 }

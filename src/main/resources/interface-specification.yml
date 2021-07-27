@@ -61,7 +61,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: "\\d+"
+            pattern: "^\\d+"
       responses:
         200:
           description: successful operation
@@ -87,7 +87,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: "\\d+"
+            pattern: "^\\d+"
       responses:
         200:
           description: successful operation
@@ -97,6 +97,30 @@ paths:
         404:
           description: Pet not found
           content: { }
+  /documents:
+    post:
+      tags:
+        - pet
+      summary: Add a document
+      operationId: addDocument
+      requestBody:
+        description: A document
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - description
+                - doc
+              properties:
+                description:
+                  type: string
+                doc:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: successful operation
 components:
   schemas:
     Pet:
@@ -106,7 +130,7 @@ components:
       properties:
         id:
           type: string
-          pattern: "\\d+"
+          pattern: "^\\d+"
         name:
           type: string
           example: doggie

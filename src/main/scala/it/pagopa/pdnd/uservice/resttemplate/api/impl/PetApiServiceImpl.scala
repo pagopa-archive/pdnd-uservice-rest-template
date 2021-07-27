@@ -6,6 +6,7 @@ import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onSuccess
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
 import akka.pattern.StatusReply
 import it.pagopa.pdnd.uservice.resttemplate.api.PetApiService
 import it.pagopa.pdnd.uservice.resttemplate.common.system._
@@ -13,6 +14,7 @@ import it.pagopa.pdnd.uservice.resttemplate.model.Pet
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence.PetPersistentBehavior.PetNotFoundException
 import it.pagopa.pdnd.uservice.resttemplate.model.persistence._
 
+import java.io.File
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -70,7 +72,7 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
     * Code: 400, Message: Invalid ID supplied
     * Code: 404, Message: Pet not found
     */
-  override def getPetById(petId: String)(implicit toEntityMarshaller: ToEntityMarshaller[Pet]): Route = {
+  override def getPetById(petId: String)(implicit toEntityMarshaller: ToEntityMarshaller[Pet], contexts: Seq[(String, String)]): Route = {
     val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
     val result: Future[StatusReply[Pet]] = commander.ask(ref => GetPet(petId, ref))
     onSuccess(result) {
@@ -99,10 +101,17 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
   /**
    * Code: 200, Message: List of pets, DataType: Seq[Pet]
    */
-  override def listPets()(implicit toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]]): Route = {
+  override def listPets()(implicit toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]], contexts: Seq[(String, String)]): Route = {
     val sliceSize = 1000
     val commanders: Seq[EntityRef[Command]] = (0 until settings.numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
     val pets: Seq[Pet] = commanders.to(LazyList).flatMap(ref => slices(ref, sliceSize))
     listPets200(pets)
+  }
+
+  /**
+   * Code: 200, Message: successful operation
+   */
+  override def addDocument(description: String, doc: (FileInfo, File)): Route = {
+    addDocument200
   }
 }

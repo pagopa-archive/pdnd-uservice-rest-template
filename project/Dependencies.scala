@@ -65,6 +65,10 @@ object Dependencies {
     lazy val classic   = namespace % "logback-classic" % logbackVersion
   }
 
+  private[this] object commons {
+    lazy val fileUpload = "commons-fileupload" % "commons-fileupload" % commonsFileUploadVersion
+  }
+
   private[this] object kamon {
     lazy val namespace  = "io.kamon"
     lazy val bundle     = namespace %% "kamon-bundle"     % kamonVersion
@@ -124,6 +128,7 @@ object Dependencies {
       akka.http                    % Compile,
       akka.httpJson                % Compile,
       awssdk.s3                    % Compile,
+      commons.fileUpload           % Compile,
       logback.classic              % Compile,
       akka.slf4j                   % Compile,
       openapi4j.operationValidator % Compile,

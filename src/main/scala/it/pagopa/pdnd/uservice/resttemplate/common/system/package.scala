@@ -9,7 +9,7 @@ package object system {
 
   implicit val timeout: Timeout = 300.seconds
 
-  object Authenticator extends Authenticator[Unit] {
-    override def apply(credentials: Credentials): Option[Unit] = Some(())
+  object Authenticator extends Authenticator[Seq[(String, String)]] {
+    override def apply(credentials: Credentials): Option[Seq[(String, String)]] = Some(Seq.empty[(String, String)])
   }
 }
