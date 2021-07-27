@@ -42,6 +42,14 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
               Method.PUT
             case HttpMethods.DELETE =>
               Method.DELETE
+            case HttpMethods.HEAD =>
+              Method.HEAD
+            case HttpMethods.OPTIONS =>
+              Method.OPTIONS
+            case HttpMethods.PATCH =>
+              Method.PATCH
+            case HttpMethods.TRACE =>
+              Method.TRACE  
             case _ =>
               Method.GET
           })
