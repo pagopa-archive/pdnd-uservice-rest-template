@@ -72,8 +72,8 @@ import akka.http.scaladsl.server.directives.FileInfo
         {{#responses}}   * {{#code}}Code: {{.}}{{/code}}{{#message}}, Message: {{.}}{{/message}}{{#dataType}}, DataType: {{.}}{{/dataType}}
         {{/responses}}
         */
-        def {{operationId}}({{> operationParam}}){{^vendorExtensions.x-specific-marshallers.isEmpty}}
-            (implicit {{#vendorExtensions.x-specific-marshallers}}toEntityMarshaller{{varName}}: ToEntityMarshaller[{{dataType}}]{{^-last}}, {{/-last}}{{/vendorExtensions.x-specific-marshallers}}, contexts: Seq[(String, String)]){{/vendorExtensions.x-specific-marshallers.isEmpty}}: Route
+        def {{operationId}}({{> operationParam}})
+        (implicit contexts: Seq[(String, String)]{{^vendorExtensions.x-specific-marshallers.isEmpty}}, {{#vendorExtensions.x-specific-marshallers}}toEntityMarshaller{{varName}}: ToEntityMarshaller[{{dataType}}]{{^-last}}, {{/-last}}{{/vendorExtensions.x-specific-marshallers}}{{/vendorExtensions.x-specific-marshallers.isEmpty}}): Route
 
     {{/operation}}
     }

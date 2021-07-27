@@ -27,7 +27,11 @@ import scala.concurrent.{Await, Future}
     "org.wartremover.warts.Recursion"
   )
 )
-class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entity: Entity[Command, ShardingEnvelope[Command]]) extends PetApiService {
+class PetApiServiceImpl(
+  system: ActorSystem[_],
+  sharding: ClusterSharding,
+  entity: Entity[Command, ShardingEnvelope[Command]]
+) extends PetApiService {
 
   private val settings: ClusterShardingSettings = entity.settings match {
     case None    => ClusterShardingSettings(system)
@@ -36,26 +40,27 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
 
   @inline private def getShard(id: String): String = (math.abs(id.hashCode) % settings.numberOfShards).toString
 
-  /** Code: 405, Message: Invalid input
+  /** Code: 200, Message: Pet create
+    * Code: 405, Message: Invalid input
     */
-  override def addPet(pet: Pet): Route = {
-    pet.id.fold(addPet405){
-      id =>
-        val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(id))
-        val result: Future[StatusReply[String]] = commander.ask(ref => AddPet(pet, ref))
-        onSuccess(result) {
-          case statusReply if statusReply.isSuccess =>
-            addPet200
-          case statusReply if statusReply.isError   => addPet405
-        }
+  override def addPet(pet: Pet)(implicit contexts: Seq[(String, String)]): Route = {
+    pet.id.fold(addPet405) { id =>
+      val commander                           = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(id))
+      val result: Future[StatusReply[String]] = commander.ask(ref => AddPet(pet, ref))
+      onSuccess(result) {
+        case statusReply if statusReply.isSuccess =>
+          addPet200
+        case statusReply if statusReply.isError => addPet405
+      }
     }
   }
 
-  /** Code: 400, Message: Invalid ID supplied
+  /** Code: 200, Message: successful operation
+    * Code: 400, Message: Invalid ID supplied
     * Code: 404, Message: Pet not found
     */
-  override def deletePet(petId: String): Route = {
-    val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
+  override def deletePet(petId: String)(implicit contexts: Seq[(String, String)]): Route = {
+    val commander                           = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
     val result: Future[StatusReply[String]] = commander.ask(ref => DeletePet(petId, ref))
     onSuccess(result) {
       case statusReply if statusReply.isSuccess =>
@@ -72,8 +77,10 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
     * Code: 400, Message: Invalid ID supplied
     * Code: 404, Message: Pet not found
     */
-  override def getPetById(petId: String)(implicit toEntityMarshaller: ToEntityMarshaller[Pet], contexts: Seq[(String, String)]): Route = {
-    val commander = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
+  override def getPetById(
+    petId: String
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerPet: ToEntityMarshaller[Pet]): Route = {
+    val commander                        = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(petId))
     val result: Future[StatusReply[Pet]] = commander.ask(ref => GetPet(petId, ref))
     onSuccess(result) {
       case statusReply if statusReply.isSuccess =>
@@ -98,20 +105,25 @@ class PetApiServiceImpl(system: ActorSystem[_], sharding: ClusterSharding, entit
     readSlice(commander, 0, sliceSize, LazyList.empty)
   }
 
-  /**
-   * Code: 200, Message: List of pets, DataType: Seq[Pet]
-   */
-  override def listPets()(implicit toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]], contexts: Seq[(String, String)]): Route = {
+  /** Code: 200, Message: List of pets, DataType: Seq[Pet]
+    */
+  override def listPets()(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPetarray: ToEntityMarshaller[Seq[Pet]]
+  ): Route = {
     val sliceSize = 1000
-    val commanders: Seq[EntityRef[Command]] = (0 until settings.numberOfShards).map(shard => sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString))
+    val commanders: Seq[EntityRef[Command]] = (0 until settings.numberOfShards).map(shard =>
+      sharding.entityRefFor(PetPersistentBehavior.TypeKey, shard.toString)
+    )
     val pets: Seq[Pet] = commanders.to(LazyList).flatMap(ref => slices(ref, sliceSize))
     listPets200(pets)
   }
 
-  /**
-   * Code: 200, Message: successful operation
-   */
-  override def addDocument(description: String, doc: (FileInfo, File)): Route = {
+  /** Code: 200, Message: successful operation
+    */
+  override def addDocument(description: String, doc: (FileInfo, File))(implicit
+    contexts: Seq[(String, String)]
+  ): Route = {
     addDocument200
   }
 }
