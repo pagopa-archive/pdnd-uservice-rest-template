@@ -20,6 +20,7 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 import java.io.{File, FileOutputStream}
+import com.typesafe.config.{Config, ConfigFactory}
 
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationException => Route] = None)(implicit system: ActorSystem) {
 
@@ -29,6 +30,7 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
       resource.transferTo(new FileOutputStream(tmpFile))
       private val api = new OpenApi3Parser().parse(tmpFile, true)
       private val validator = new RequestValidator(api)
+      private val strictnessTimeout = FiniteDuration(ConfigFactory.load().getDuration("http.entity-to-strict-timeout").toSeconds, SECONDS)
 
       def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
         if (!(validationExceptionToRoute.isDefined && !httpRequest.uri.toString.contains("swagger-ui")))
@@ -79,7 +81,7 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
       }
 
   lazy val routes: Route = pathPrefix("{{projectName}}" / "{{appVersion}}") {
-    toStrictEntity(15.seconds) {
+    toStrictEntity(strictnessTimeout) {
       extractRequest {
         request =>
           validationFunction(request){
