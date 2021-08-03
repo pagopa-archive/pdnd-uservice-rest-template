@@ -7,8 +7,9 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, ShardedDae
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.{Cluster, Subscribe}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directive
+import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.cluster.bootstrap.ClusterBootstrap
@@ -30,7 +31,8 @@ import scala.jdk.CollectionConverters._
 @SuppressWarnings(
   Array(
     "org.wartremover.warts.StringPlusAny",
-    "org.wartremover.warts.Nothing"
+    "org.wartremover.warts.Nothing",
+    "org.wartremover.warts.ImplicitConversion"
   )
 )
 object Main extends App {
@@ -76,27 +78,52 @@ object Main extends App {
         val config = RateLimiterConfig.custom()
           .limitRefreshPeriod(Duration.ofMillis(10000))
           .limitForPeriod(10)
-          .timeoutDuration(Duration.ofMillis(60000))
+          .timeoutDuration(Duration.ofMillis(1000))
           .build()
 
         val rateLimiterRegistry = RateLimiterRegistry.of(config)
 
         val rateLimiterWithDefaultConfig = rateLimiterRegistry.rateLimiter("name1")
 
-        def throttle: Directive[Unit] = Directive[Unit] { inner => ctx =>
-          try {
-            RateLimiter.waitForPermission(rateLimiterWithDefaultConfig)
-            inner(())(ctx)
-          } catch {
-            case _: RequestNotPermitted =>
-              complete(StatusCodes.TooManyRequests)(ctx)
-          }
+        abstract class ExtractContexts extends Directive1[Seq[(String, String)]]
+
+        object ExtractContexts {
+          implicit def apply(other: Directive1[Seq[(String, String)]]): ExtractContexts =
+            inner =>
+              other.tapply(
+                seq =>
+                  rc => {
+                    val headers = rc.request.headers.map(header => (header.name(), header.value()))
+                    inner(Tuple1(seq._1 ++ headers))(rc)
+                  }
+              )
+        }
+
+        abstract class Throttle extends Directive1[Seq[(String, String)]]
+
+        object Throttle {
+          implicit def apply(other: Directive1[Seq[(String, String)]]): Throttle =
+            inner =>
+              other.tapply(
+                seq =>
+                  rc => try {
+                    RateLimiter.waitForPermission(rateLimiterWithDefaultConfig)
+                    inner(seq)(rc)
+                  } catch {
+                    case _: RequestNotPermitted =>
+                      complete(StatusCodes.TooManyRequests)(rc)
+                  }
+              )
         }
 
         val petApi = new PetApi(
           new PetApiServiceImpl(context.system, sharding, petPersistentEntity),
           new PetApiMarshallerImpl(),
-          throttle & SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator)
+          Throttle {
+            ExtractContexts {
+              SecurityDirectives.authenticateBasic("SecurityRealm", Authenticator)
+            }
+          }
         )
 
         val _ = AkkaManagement.get(classicSystem).start()
