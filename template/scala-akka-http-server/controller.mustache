@@ -13,24 +13,33 @@ import org.openapi4j.operation.validator.model.Request.Method
 import org.openapi4j.operation.validator.model.impl.{Body, DefaultRequest}
 import org.openapi4j.operation.validator.validation.RequestValidator
 import org.openapi4j.parser.OpenApi3Parser
+import com.github.mustachejava.DefaultMustacheFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
-import java.io.{File, FileOutputStream}
+import java.io.{BufferedWriter, File, FileOutputStream, FileWriter, StringWriter}
 import com.typesafe.config.{Config, ConfigFactory}
+import scala.collection.mutable
 
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationException => Route] = None)(implicit system: ActorSystem) {
 
-      private val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
-      private val tmpFile = File.createTempFile("tmp", "interface-specification.yml")
-      tmpFile.deleteOnExit()
-      resource.transferTo(new FileOutputStream(tmpFile))
-      private val api = new OpenApi3Parser().parse(tmpFile, true)
-      private val validator = new RequestValidator(api)
-      private val strictnessTimeout = FiniteDuration(ConfigFactory.load().getDuration("http.entity-to-strict-timeout").toSeconds, SECONDS)
+        private val mf = new DefaultMustacheFactory
+        private val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
+        val writer =
+        mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> buildinfo.BuildInfo.version).asJava).asInstanceOf[StringWriter]
+        writer.flush()
+        writer.close()
+        private val tmpFile = File.createTempFile("tmp", "interface-specification.yml")
+        tmpFile.deleteOnExit()
+        val w = new BufferedWriter(new FileWriter(tmpFile))
+        w.write(writer.toString)
+        w.close()
+        private val api = new OpenApi3Parser().parse(tmpFile, true)
+        private val validator = new RequestValidator(api)
+        private val strictnessTimeout = FiniteDuration(ConfigFactory.load().getDuration("http.entity-to-strict-timeout").toSeconds, SECONDS)
 
       def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
         if (!(validationExceptionToRoute.isDefined && !httpRequest.uri.toString.contains("swagger-ui")))
@@ -80,14 +89,14 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
           }
       }
 
-  lazy val routes: Route = pathPrefix("{{projectName}}" / "{{appVersion}}") {
+  lazy val routes: Route = pathPrefix("{{projectName}}" / buildinfo.BuildInfo.version) {
     toStrictEntity(strictnessTimeout) {
       extractRequest {
         request =>
           validationFunction(request){
             {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
         }
-      } ~ getFromResourceDirectory("swagger-ui") ~ getFromResource("interface-specification.yml")
+      } ~ getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
     }
   }
 

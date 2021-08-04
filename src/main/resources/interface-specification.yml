@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: Simple Service Template
   description: 'This is a sample server'
-  version: 'v1'
+  version: '{{version}}'
 servers:
-  - url: /pdnd-uservice-rest-template/v1
+  - url: /pdnd-uservice-rest-template/{{version}}
 tags:
   - name: pet
     description: Everything about your Pets

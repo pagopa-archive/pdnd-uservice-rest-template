@@ -69,6 +69,10 @@ object Dependencies {
     lazy val fileUpload = "commons-fileupload" % "commons-fileupload" % commonsFileUploadVersion
   }
 
+  private[this] object mustache {
+    lazy val mustache = "com.github.spullara.mustache.java" % "compiler" % mustacheVersion
+  }
+
   private[this] object kamon {
     lazy val namespace  = "io.kamon"
     lazy val bundle     = namespace %% "kamon-bundle"     % kamonVersion
@@ -129,6 +133,7 @@ object Dependencies {
       akka.httpJson                % Compile,
       awssdk.s3                    % Compile,
       commons.fileUpload           % Compile,
+      mustache.mustache            % Compile,
       logback.classic              % Compile,
       akka.slf4j                   % Compile,
       openapi4j.operationValidator % Compile,

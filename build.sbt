@@ -14,21 +14,24 @@ ThisBuild / version := {
   Process("./version.sh").lineStream_!.head.replaceFirst("v", "")
 }
 
-lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
+val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
+
+val packagePrefix = settingKey[String]("The package prefix derived from the uservice name")
+
+packagePrefix := {
+    name.value.replaceFirst("pdnd-", "pdnd.").replaceFirst("uservice-", "uservice.").replaceAll("-", "")
+}
 
 generateCode := {
   import sys.process._
-
-  val packagePrefix =
-    name.value.replaceFirst("pdnd-", "pdnd.").replaceFirst("uservice-", "uservice.").replaceAll("-", "")
 
   Process(s"""openapi-generator-cli generate -t template/scala-akka-http-server
              |                               -i src/main/resources/interface-specification.yml
              |                               -g scala-akka-http-server
              |                               -p projectName=${name.value}
-             |                               -p invokerPackage=it.pagopa.${packagePrefix}.server
-             |                               -p modelPackage=it.pagopa.${packagePrefix}.model
-             |                               -p apiPackage=it.pagopa.${packagePrefix}.api
+             |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.server
+             |                               -p modelPackage=it.pagopa.${packagePrefix.value}.model
+             |                               -p apiPackage=it.pagopa.${packagePrefix.value}.api
              |                               -p dateLibrary=java8
              |                               -o generated""".stripMargin).!!
 
@@ -36,9 +39,9 @@ generateCode := {
              |                               -i src/main/resources/interface-specification.yml
              |                               -g scala-akka
              |                               -p projectName=${name.value}
-             |                               -p invokerPackage=it.pagopa.${packagePrefix}.client.invoker
-             |                               -p modelPackage=it.pagopa.${packagePrefix}.client.model
-             |                               -p apiPackage=it.pagopa.${packagePrefix}.client.api
+             |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.client.invoker
+             |                               -p modelPackage=it.pagopa.${packagePrefix.value}.client.model
+             |                               -p apiPackage=it.pagopa.${packagePrefix.value}.client.api
              |                               -p dateLibrary=java8
              |                               -o client""".stripMargin).!!
 
@@ -48,13 +51,17 @@ Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value)
 
 cleanFiles += baseDirectory.value / "generated" / "src"
 
+cleanFiles += baseDirectory.value / "generated" / "target"
+
 cleanFiles += baseDirectory.value / "client" / "src"
+
+cleanFiles += baseDirectory.value / "client" / "target"
 
 lazy val generated = project
   .in(file("generated"))
   .settings(
     scalacOptions := Seq()
-  )
+  ).enablePlugins(BuildInfoPlugin)
 
 lazy val client = project
   .in(file("client"))
@@ -102,6 +109,6 @@ lazy val root = (project in file("."))
   )
   .aggregate(client)
   .dependsOn(generated)
-  .enablePlugins(JavaAppPackaging, JavaAgent)
+  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, JavaAgent)
 
 javaAgents += "io.kamon" % "kanela-agent" % "1.0.7"
