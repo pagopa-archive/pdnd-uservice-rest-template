@@ -40,7 +40,6 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
         }
 
         private val mf = new DefaultMustacheFactory
-        private val resource = Thread.currentThread().getContextClassLoader.getResourceAsStream("interface-specification.yml")
         val writer =
         mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> getInterfaceVersion).asJava).asInstanceOf[StringWriter]
         writer.flush()
