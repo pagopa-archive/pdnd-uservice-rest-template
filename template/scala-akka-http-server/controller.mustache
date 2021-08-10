@@ -29,10 +29,7 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
         def getInterfaceVersion = {
           val semver = raw"([1-9]\d*)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?".r
           buildinfo.BuildInfo.version match {
-            case "latest" =>
-              "latest"
             case semver(major, minor, _*) =>
-              println()
               s"$major.$minor"
             case _ =>
               "wrong-version"

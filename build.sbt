@@ -10,9 +10,6 @@ ThisBuild / libraryDependencies := Dependencies.Jars.`server`.map(m =>
     m
 )
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
-ThisBuild / version := {
-  Process("./version.sh").lineStream_!.head.replaceFirst("v", "")
-}
 
 val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
 
