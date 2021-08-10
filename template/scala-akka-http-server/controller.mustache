@@ -27,7 +27,7 @@ import scala.collection.mutable
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationException => Route] = None)(implicit system: ActorSystem) {
 
         def getInterfaceVersion = {
-          val semver = raw"([1-9]\d*)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?".r
+          val semver = raw"([1-9]\d*)\.(\d+)\.(\d+).*".r
           buildinfo.BuildInfo.version match {
             case semver(major, minor, _*) =>
               s"$major.$minor"
