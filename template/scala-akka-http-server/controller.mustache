@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 {{/operations}}{{/apis}}{{/apiInfo}}
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.stream.scaladsl.Sink
 import org.openapi4j.core.validation.ValidationException
 import org.openapi4j.operation.validator.model.Request.Method
@@ -26,19 +26,10 @@ import scala.collection.mutable
 
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationException => Route] = None)(implicit system: ActorSystem) {
 
-        def getInterfaceVersion = {
-          val semver = raw"([1-9]\d*)\.(\d+)\.(\d+).*".r
-          buildinfo.BuildInfo.version match {
-            case semver(major, minor, _*) =>
-              s"$major.$minor"
-            case _ =>
-              "wrong-version"
-          }
-        }
-
+        val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
         private val mf = new DefaultMustacheFactory
         val writer =
-        mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> getInterfaceVersion).asJava).asInstanceOf[StringWriter]
+        mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion).asJava).asInstanceOf[StringWriter]
         writer.flush()
         writer.close()
         private val tmpFile = File.createTempFile("tmp", "interface-specification.yml")
@@ -49,9 +40,10 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
         private val api = new OpenApi3Parser().parse(tmpFile, true)
         private val validator = new RequestValidator(api)
         private val strictnessTimeout = FiniteDuration(ConfigFactory.load().getDuration("http.entity-to-strict-timeout").toSeconds, SECONDS)
+        private val validationsWhitelist: List[String] = List("swagger-ui", "build-info")
 
       def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
-        if (!(validationExceptionToRoute.isDefined && !httpRequest.uri.toString.contains("swagger-ui")))
+        if (!(validationExceptionToRoute.isDefined && !validationsWhitelist.exists(httpRequest.uri.toString.contains(_))))
           route
         else {
           val builder = new DefaultRequest.Builder(httpRequest.uri.toString(), httpRequest.method match {
@@ -98,7 +90,17 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
           }
       }
 
-  lazy val routes: Route = pathPrefix("{{projectName}}" / getInterfaceVersion) {
+  /**
+  * Exposes build information of this project.
+  */
+  def getBuildInfo: Route =
+    path("{{projectName}}" / "build-info") {
+      get {
+        complete(HttpEntity(ContentTypes.`application/json`, buildinfo.BuildInfo.toJson))
+      }
+   }
+
+  lazy val routes: Route = getBuildInfo ~ pathPrefix("{{projectName}}" / interfaceVersion) {
     toStrictEntity(strictnessTimeout) {
       extractRequest {
         request =>

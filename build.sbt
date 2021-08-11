@@ -1,4 +1,4 @@
-import scala.sys.process.Process
+import ProjectSettings.ProjectFrom
 
 ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / organization := "it.pagopa"
@@ -58,7 +58,7 @@ lazy val generated = project
   .in(file("generated"))
   .settings(
     scalacOptions := Seq()
-  ).enablePlugins(BuildInfoPlugin)
+  ).setupBuildInfo
 
 lazy val client = project
   .in(file("client"))
@@ -106,6 +106,7 @@ lazy val root = (project in file("."))
   )
   .aggregate(client)
   .dependsOn(generated)
-  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, JavaAgent)
+  .enablePlugins(JavaAppPackaging, JavaAgent)
+  .setupBuildInfo
 
 javaAgents += "io.kamon" % "kanela-agent" % "1.0.7"
