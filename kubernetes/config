@@ -12,4 +12,7 @@ repository=$DOCKER_REPO
 
 name=$(cat $SCRIPT_PATH/../build.sbt | grep "name :=" | awk -F:= '{ print $2 }' | sed 's/\"//' | sed 's/\",//' | sed 's/ //' | tr '[:upper:]' '[:lower:]' | grep -v client)
 
-version=$($SCRIPT_PATH/../version.sh)
+#getting version from sbt
+cd ..
+version=$(sbt -Dsbt.log.noformat=true 'inspect actual version' | grep "Setting: java.lang.String" | cut -d '=' -f2 | tr -d ' ')
+cd $SCRIPT_PATH
