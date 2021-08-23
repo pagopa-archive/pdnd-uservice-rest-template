@@ -15,17 +15,17 @@ object ProjectSettings {
 
   private val commitSha: Option[String] = Try(Process(s"git rev-parse --short HEAD").lineStream_!.head).toOption
 
-  private def getInterfaceVersion: String = {
-   val sv = ComputeVersion.version.split("\\.")
-   s"${sv(0)}.${sv(1)}"
+  private val interfaceVersion: String = ComputeVersion.version.split("\\.") match {
+    case Array(major, minor, _*) =>
+       s"$major.$minor"
   }
 
   //lifts some useful data in BuildInfo instance
   val buildInfoExtra: Seq[BuildInfoKey] = Seq[BuildInfoKey](
-    "ciBuildNumber" -> sys.env.get("BUILD_NUMBER"),
-    "commitSha"             -> commitSha,
-    "currentBranch"         -> currentBranch,
-    "interfaceVersion"      -> getInterfaceVersion
+    "ciBuildNumber"    -> sys.env.get("BUILD_NUMBER"),
+    "commitSha"        -> commitSha,
+    "currentBranch"    -> currentBranch,
+    "interfaceVersion" -> interfaceVersion
   )
 
   /** Extention methods for sbt Project instances.
