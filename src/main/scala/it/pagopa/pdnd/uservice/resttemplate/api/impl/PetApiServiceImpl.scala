@@ -38,7 +38,7 @@ class PetApiServiceImpl(
     case Some(s) => s
   }
 
-  @inline private def getShard(id: String): String = (math.abs(id.hashCode) % settings.numberOfShards).toString
+  @inline private def getShard(id: String): String = math.abs(id.hashCode % settings.numberOfShards).toString
 
   /** Code: 200, Message: Pet create
     * Code: 405, Message: Invalid input
