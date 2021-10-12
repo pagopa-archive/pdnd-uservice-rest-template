@@ -31,6 +31,7 @@ generateCode := {
              |                               -p modelPackage=it.pagopa.${packagePrefix.value}.model
              |                               -p apiPackage=it.pagopa.${packagePrefix.value}.api
              |                               -p dateLibrary=java8
+             |                               -p entityStrictnessTimeout=15
              |                               -o generated""".stripMargin).!!
 
   Process(s"""openapi-generator-cli generate -t template/scala-akka-http-client
