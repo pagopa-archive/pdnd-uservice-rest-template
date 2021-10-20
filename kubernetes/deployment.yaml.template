@@ -62,16 +62,16 @@ spec:
                 secretKeyRef:
                   name: cassandra
                   key: CASSANDRA_HOST
-            - name: CASSANDRA_USER
+            - name: CASSANDRA_USR
               valueFrom:
                 secretKeyRef:
                   name: cassandra
-                  key: CASSANDRA_USER
-            - name: CASSANDRA_PWD
+                  key: CASSANDRA_USR
+            - name: CASSANDRA_PSW
               valueFrom:
                 secretKeyRef:
                   name: cassandra
-                  key: CASSANDRA_PWD
+                  key: CASSANDRA_PSW
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
