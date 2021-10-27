@@ -1,0 +1,58 @@
+package {{package}}
+
+{{#imports}}
+import {{import}}
+{{/imports}}
+
+{{#models}}
+{{#model}}
+/**
+{{#title}} * = {{{.}}} =
+ *
+{{/title}}
+{{#description}} * {{{.}}}
+ *
+{{/description}}
+{{#vars}}
+ * @param {{{name}}} {{{description}}}{{#example}} for example: ''{{{.}}}''{{/example}}
+{{/vars}}
+*/
+{{^isEnum}}
+final case class {{classname}} (
+  {{#vars}}
+  {{{name}}}: {{^required}}Option[{{/required}}{{^isEnum}}{{dataType}}{{/isEnum}}{{#isEnum}}{{classname}}Enums.{{datatypeWithEnum}}{{/isEnum}}{{^required}}] = None{{/required}}{{^-last}},{{/-last}}
+  {{/vars}}
+)
+
+{{#hasEnums}}
+object {{classname}}Enums {
+  {{#vars}}
+  {{#isEnum}}
+  type {{datatypeWithEnum}} = {{datatypeWithEnum}}.Value
+  {{/isEnum}}
+  {{/vars}}
+  {{#vars}}
+  {{#isEnum}}
+  object {{datatypeWithEnum}} extends Enumeration {
+{{#_enum}}
+    val {{.}} = Value("{{.}}")
+{{/_enum}}
+  }
+
+  {{/isEnum}}
+  {{/vars}}
+}
+{{/hasEnums}}
+{{/isEnum}}
+
+{{#isEnum}}
+sealed trait {{classname}}
+
+{{#allowableValues}}
+{{#values}}
+case object {{.}} extends {{classname}}
+{{/values}}
+  {{/allowableValues}}
+{{/isEnum}}
+{{/model}}
+{{/models}}
