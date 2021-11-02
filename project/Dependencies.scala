@@ -32,7 +32,7 @@ object Dependencies {
 
   private[this] object postgres {
     lazy val namespace =  "org.postgresql"
-    lazy val jdbc      =   namespace % "postgresql" % "42.2.21"
+    lazy val jdbc      =   namespace % "postgresql" % "42.3.1"
   }
 
   private[this] object awssdk {

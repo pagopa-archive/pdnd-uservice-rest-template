@@ -76,8 +76,8 @@ object Main extends App {
         }
 
         val config = RateLimiterConfig.custom()
-          .limitRefreshPeriod(Duration.ofMillis(10000))
-          .limitForPeriod(10)
+          .limitRefreshPeriod(Duration.ofMillis(1000))
+          .limitForPeriod(100000)
           .timeoutDuration(Duration.ofMillis(1000))
           .build()
 

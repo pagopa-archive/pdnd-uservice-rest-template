@@ -1,14 +1,9 @@
 import ProjectSettings.ProjectFrom
 
-ThisBuild / scalaVersion := "2.13.5"
+ThisBuild / scalaVersion := "2.13.7"
 ThisBuild / organization := "it.pagopa"
 ThisBuild / organizationName := "Pagopa S.p.A."
-ThisBuild / libraryDependencies := Dependencies.Jars.`server`.map(m =>
-  if (scalaVersion.value.startsWith("3.0"))
-    m.withDottyCompat(scalaVersion.value)
-  else
-    m
-)
+ThisBuild / libraryDependencies := Dependencies.Jars.`server`
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
 ThisBuild / version := ComputeVersion.version
 
@@ -67,12 +62,7 @@ lazy val client = project
   .settings(
     name := "pdnd-uservice-rest-template-client",
     scalacOptions := Seq(),
-    libraryDependencies := Dependencies.Jars.client.map(m =>
-      if (scalaVersion.value.startsWith("3.0"))
-        m.withDottyCompat(scalaVersion.value)
-      else
-        m
-    ),
+    libraryDependencies := Dependencies.Jars.client,
     credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
     updateOptions := updateOptions.value.withGigahorse(false),
     publishTo := {
@@ -111,4 +101,4 @@ lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .setupBuildInfo
 
-javaAgents += "io.kamon" % "kanela-agent" % "1.0.11"
+javaAgents += "io.kamon" % "kanela-agent" % "1.0.13"
