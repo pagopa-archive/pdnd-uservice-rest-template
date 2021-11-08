@@ -43,8 +43,7 @@ class PetApiServiceImpl(
   /** Code: 200, Message: Pet create
     * Code: 405, Message: Invalid input
     */
-  override def addPet(pet: Pet)(implicit contexts: Seq[(String, String)]): Route = {
-    println(contexts)
+  override def addPet(pet: Pet)(implicit contexts: Seq[(String, String)]): Route =
     pet.id.fold(addPet405) { id =>
       val commander                           = sharding.entityRefFor(PetPersistentBehavior.TypeKey, getShard(id))
       val result: Future[StatusReply[String]] = commander.ask(ref => AddPet(pet, ref))
@@ -54,7 +53,6 @@ class PetApiServiceImpl(
         case statusReply if statusReply.isError => addPet405
       }
     }
-  }
 
   /** Code: 200, Message: successful operation
     * Code: 400, Message: Invalid ID supplied

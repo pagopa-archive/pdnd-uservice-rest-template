@@ -27,6 +27,7 @@ import kamon.Kamon
 
 import java.time.Duration
 import scala.jdk.CollectionConverters._
+import scala.language.implicitConversions
 
 @SuppressWarnings(
   Array(
