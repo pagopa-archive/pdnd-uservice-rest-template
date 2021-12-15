@@ -17,7 +17,7 @@ object Versions {
   lazy val scalapbVersion              = "0.11.6"
   lazy val jacksonVersion              = "2.11.4"
   lazy val commonsFileUploadVersion    = "1.4"
-  lazy val logbackVersion              = "1.2.6"
+  lazy val logbackVersion              = "1.2.8"
   lazy val scalatestVersion            = "3.2.10"
   lazy val mockitoVersion              = "3.9.0"
 }
