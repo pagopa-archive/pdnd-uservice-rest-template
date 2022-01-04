@@ -22,6 +22,8 @@ import org.json4s.jackson.Serialization
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
 import scala.reflect.ClassTag
+import scala.util.{Success, Failure}
+import org.slf4j.Logger
 
 object ApiInvoker {
   def apply()(implicit system: ActorSystem): ApiInvoker =
@@ -213,13 +215,52 @@ class ApiInvoker(formats: Formats)(implicit system: ActorSystem) extends CustomC
         Unmarshal(response.entity)
           .to[T]
           .recoverWith {
-            case e ⇒ throw ApiError(response.status.intValue, s"Unable to unmarshall content to [$manifest]", Some(response.entity.toString), e)
+            case e =>
+            Unmarshaller.stringUnmarshaller(response.entity).transformWith {
+                case Success(st) =>
+                  throw ApiError(response.status.intValue, s"Unable to unmarshall content to [$manifest]", Some(st), e)
+                case Failure(ex) =>
+                  throw ApiError(response.status.intValue, s"Unable to unmarshall content to [$manifest]", Some(ex.getMessage), e)
+            }
           }
           .map(value => responseForState(state, value))
       case None | Some(_) =>
-        Future.failed(ApiError(response.status.intValue, "Unexpected response code", Some(response.entity.toString)))
+        Unmarshaller.stringUnmarshaller(response.entity).transformWith {
+                  case Success(st) =>
+                    Future.failed(ApiError(response.status.intValue, response.status.defaultMessage, Some(st)))
+                  case Failure(ex) =>
+                    Future.failed(ApiError(response.status.intValue, response.status.defaultMessage, Some(ex.getMessage)))
+         }
     }
   }
+
+    /**
+    * Performs a request invocation logging all the possible outcomes.
+    * @param request the API request to be performed
+    * @param message the string message to be logged when this request occur
+    * @param pf Partial Function to customize the recover behavior of this invocation. It has a default implementation doing some vanilla logging of the error.
+    * @return a future containing the expected response.
+    * <br/>
+    * <code>pf</code> accepts two parameters, namely the current logger passed implicitly and the <code>message</code> as defined in the input parameter here.
+    */
+    def invoke[T](
+      request: ApiRequest[T],
+      message: String, pf: (Logger, String) => PartialFunction[Throwable, Future[T]] = defaultInvocationRecovery)(implicit m: Manifest[T], logger: Logger): Future[T] =
+      execute[T](request)
+        .map { response =>
+          logger.info("{} - Status code: {}", message, response.code)
+          response.content
+        }
+        .recoverWith { pf(logger, message) }
+
+     private def defaultInvocationRecovery[T]: (Logger, String) => PartialFunction[Throwable, Future[T]] = (logger, message) => {
+        case ex @ ApiError(code, apiMessage, response, throwable, _) =>
+            logger.error("{} FAILED. code > {} - message > {} - response > {}", message, code, apiMessage, response, throwable)
+            Future.failed[T](ex)
+        case ex =>
+            logger.error("{} FAILED. Error: {}", message, ex.getMessage, ex)
+            Future.failed[T](ex)
+       }
 }
 sealed trait CustomContentTypes {
   protected def normalizedContentType(original: String): ContentType =

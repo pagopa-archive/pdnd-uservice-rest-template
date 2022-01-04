@@ -147,6 +147,7 @@ object Dependencies {
       akka.stream                  % Compile,
       akka.http                    % Compile,
       akka.httpJson4s              % Compile,
+      akka.slf4j                   % Compile,
       json4s.jackson               % Compile,
       json4s.ext                   % Compile
     )
