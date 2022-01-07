@@ -99,14 +99,19 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
       }
    }
 
-  lazy val routes: Route = getBuildInfo ~ pathPrefix("{{projectName}}" / interfaceVersion) {
+     def swaggerRoute: Route =
+         pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
+           getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
+     }
+
+  lazy val routes: Route = getBuildInfo ~ swaggerRoute ~ pathPrefix("{{projectName}}" / interfaceVersion) {
     toStrictEntity(strictnessTimeout) {
       extractRequest {
         request =>
           validationFunction(request){
             {{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
         }
-      } ~ getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
+      }
     }
   }
 
