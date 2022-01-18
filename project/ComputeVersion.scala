@@ -16,7 +16,7 @@ object ComputeVersion {
 
   val releaseBranch: Regex = "([1-9]\\d*)\\.(\\d+)\\.([x])".r
 
-  val tag: Regex = "(v[1-9]\\d*)\\.(\\d+)\\.(\\d+)".r
+  val tag: Regex = "v([0-9]\\d*)\\.(\\d+)\\.(\\d+)".r
 
   lazy val version: String =  gitOutput match {
     case tag(major, minor, build) =>
