@@ -4,12 +4,11 @@ package {{package}}
 {{#imports}}
 import {{import}}
 {{/imports}}
+import {{invokerPackage}}.ApiModel
 
 {{#models}}
 {{#model}}
 {{^isEnum}}
-import {{invokerPackage}}.ApiModel
-
 
 case class {{classname}} (
   {{#vars}}
@@ -44,14 +43,19 @@ object {{classname}}Enums {
 
 
 {{#isEnum}}
-sealed trait {{classname}}
 
-{{#allowableValues}}
-{{#values}}
-case object {{.}} extends {{classname}}
-{{/values}}
+sealed trait {{classname}} extends ApiModel
+
+object {{classname}} {
+
+  {{#allowableValues}}
+  {{#values}}
+  case object {{.}} extends {{classname}}
+  {{/values}}
   {{/allowableValues}}
-{{/isEnum}}
 
+}
+
+{{/isEnum}}
 {{/model}}
 {{/models}}

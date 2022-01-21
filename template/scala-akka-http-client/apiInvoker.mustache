@@ -141,6 +141,8 @@ class ApiInvoker(formats: Formats)(implicit system: ActorSystem) extends CustomC
             HttpRequest(m, uri, entity = c.toEntity)
           case Some(c: String) =>
             HttpRequest(m, uri, entity = HttpEntity(normalizedContentType(request.contentType), ByteString(c)))
+          case _ if request.bodyParam.isEmpty =>
+            HttpRequest(m, uri, entity = HttpEntity.Empty)
           case _ =>
             HttpRequest(m, uri, entity = HttpEntity(normalizedContentType(request.contentType), ByteString(" ")))
         }
