@@ -46,13 +46,51 @@ object {{classname}}Enums {
 {{/isEnum}}
 
 {{#isEnum}}
+
 sealed trait {{classname}}
 
-{{#allowableValues}}
-{{#values}}
-case object {{.}} extends {{classname}}
-{{/values}}
+object {{classname}} {
+  import spray.json._
+
+  {{#allowableValues}}
+  {{#values}}
+  case object {{.}} extends {{classname}}
+  {{/values}}
   {{/allowableValues}}
+
+  implicit object {{classname}}Format extends RootJsonFormat[{{classname}}] {
+      def write(obj: {{classname}}): JsValue =
+        obj match {
+  {{#allowableValues}}
+  {{#values}}
+           case {{.}} => JsString("{{.}}")
+  {{/values}}
+  {{/allowableValues}}
+        }
+
+      def read(json: JsValue): {{classname}} =
+        json match {
+  {{#allowableValues}}
+  {{#values}}
+           case JsString("{{.}}") => {{.}}
+  {{/values}}
+  {{/allowableValues}}
+          case unrecognized     => deserializationError(s"{{classname}} serialization error ${unrecognized.toString}")
+        }
+  }
+
+  def fromValue(value: String): Either[Throwable, {{classname}}] =
+    value match {
+    {{#allowableValues}}
+    {{#values}}
+       case "{{.}}" => Right({{.}})
+    {{/values}}
+    {{/allowableValues}}
+       case other => Left(new RuntimeException(s"Unable to decode value $other"))
+    }
+
+}
+
 {{/isEnum}}
 {{/model}}
 {{/models}}

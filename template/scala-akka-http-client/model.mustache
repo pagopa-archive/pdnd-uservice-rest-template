@@ -8,7 +8,9 @@ import {{invokerPackage}}.ApiModel
 
 {{#models}}
 {{#model}}
+
 {{^isEnum}}
+
 
 case class {{classname}} (
   {{#vars}}
@@ -54,6 +56,15 @@ object {{classname}} {
   {{/values}}
   {{/allowableValues}}
 
+  def fromValue(value: String): Either[Throwable, {{classname}}] =
+    value match {
+    {{#allowableValues}}
+    {{#values}}
+       case "{{.}}" => Right({{.}})
+    {{/values}}
+    {{/allowableValues}}
+       case other => Left(new RuntimeException(s"Unable to decode value $other"))
+    }
 }
 
 {{/isEnum}}

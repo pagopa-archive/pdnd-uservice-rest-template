@@ -1,14 +1,22 @@
 package {{package}}
 
+import akka.event.Logging
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
+import akka.http.scaladsl.server.{Directive0, Directive1, Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{Directive1, Route}
+import org.slf4j.{Logger, LoggerFactory}
+import ch.qos.logback.classic.LoggerContext
+import it.pagopa.pdnd.interop.commons.logging.ContextFieldsToLog
+import it.pagopa.pdnd.interop.commons.utils.UID
+import it.pagopa.pdnd.interop.commons.utils.CORRELATION_ID_HEADER
 {{^pathMatcherPatterns.isEmpty}}import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 {{/pathMatcherPatterns.isEmpty}}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 {{#hasMarshalling}}
-    import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-    import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
 {{/hasMarshalling}}
 {{#hasCookieParams}}import akka.http.scaladsl.model.headers.HttpCookiePair
 {{/hasCookieParams}}
@@ -38,10 +46,28 @@ import akka.http.scaladsl.server.directives.FileInfo
     {{#hasMarshalling}}import {{classVarName}}Marshaller._
     {{/hasMarshalling}}
 
+   private def logHttp(ctxs: Seq[(String, String)]): Directive0 = {
+       val contexts = ctxs.toMap
+       val context =
+         s"""[${contexts.get(UID).getOrElse("")}] [${contexts.get(CORRELATION_ID_HEADER).getOrElse("")}]"""
+       def logWithoutBody(req: HttpRequest): RouteResult => Option[LogEntry] = {
+         case RouteResult.Complete(res) =>
+           Some(LogEntry(s"${context} - Request ${req.uri} - Response ${res.status}", Logging.InfoLevel))
+         case RouteResult.Rejected(rej) =>
+           Some(LogEntry(s"${context} - Request ${req.uri} - Response ${rej}", Logging.InfoLevel))
+       }
+       DebuggingDirectives.logRequestResult(logWithoutBody _)
+     }
+
     lazy val route: Route =
     {{#operation}}
         path({{#vendorExtensions.x-paths}}{{#isText}}"{{/isText}}{{value}}{{#isText}}"{{/isText}}{{^-last}} / {{/-last}}{{/vendorExtensions.x-paths}}) { {{^pathParams.isEmpty}}({{#pathParams}}{{paramName}}{{^-last}}, {{/-last}}{{/pathParams}}) => {{/pathParams.isEmpty}}
-        {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} { wrappingDirective { implicit contexts => {{^queryParams.isEmpty}}
+        {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {
+        optionalHeaderValueByName(CORRELATION_ID_HEADER) { correlationId =>
+               val contextsDirective = wrappingDirective.map(contexts => contexts.prepended((CORRELATION_ID_HEADER, correlationId.getOrElse(""))))
+               contextsDirective { implicit contexts =>
+               logHttp(contexts) {
+            {{^queryParams.isEmpty}}
             parameters({{#queryParams}}"{{baseName}}".as[{{dataType}}]{{^required}}.?{{#vendorExtensions.x-has-default-value}}({{{defaultValue}}}){{/vendorExtensions.x-has-default-value}}{{/required}}{{^-last}}, {{/-last}}{{/queryParams}}) { ({{#queryParams}}{{paramName}}{{^-last}}, {{/-last}}{{/queryParams}}) =>{{/queryParams.isEmpty}} {{^headerParams.isEmpty}}
             {{#headerParams}}{{#required}}headerValueByName{{/required}}{{^required}}optionalHeaderValueByName{{/required}}("{{baseName}}") { {{paramName}} => {{/headerParams}}{{/headerParams.isEmpty}}{{^cookieParams.isEmpty}}
             {{#cookieParams}}{{#required}}cookie({{/required}}{{^required}}optionalCookie({{/required}}"{{baseName}}"){ {{paramName}} => {{/cookieParams}}{{/cookieParams.isEmpty}}{{#isMultipart}}
@@ -49,7 +75,9 @@ import akka.http.scaladsl.server.directives.FileInfo
             }{{/cookieParams.isEmpty}}{{^headerParams.isEmpty}}
             }{{/headerParams.isEmpty}}{{^queryParams.isEmpty}}
             }{{/queryParams.isEmpty}}
-        }
+            }
+            }
+          }
         }
         }{{^-last}} ~{{/-last}}
     {{/operation}}
@@ -72,8 +100,8 @@ import akka.http.scaladsl.server.directives.FileInfo
         {{#responses}}   * {{#code}}Code: {{.}}{{/code}}{{#message}}, Message: {{.}}{{/message}}{{#dataType}}, DataType: {{.}}{{/dataType}}
         {{/responses}}
         */
-        def {{operationId}}({{> operationParam}})
-        (implicit contexts: Seq[(String, String)]{{^vendorExtensions.x-specific-marshallers.isEmpty}}, {{#vendorExtensions.x-specific-marshallers}}toEntityMarshaller{{varName}}: ToEntityMarshaller[{{dataType}}]{{^-last}}, {{/-last}}{{/vendorExtensions.x-specific-marshallers}}{{/vendorExtensions.x-specific-marshallers.isEmpty}}): Route
+        def {{operationId}}({{> operationParam}}){{^vendorExtensions.x-specific-marshallers.isEmpty}}
+            (implicit {{#vendorExtensions.x-specific-marshallers}}toEntityMarshaller{{varName}}: ToEntityMarshaller[{{dataType}}]{{^-last}}, {{/-last}}{{/vendorExtensions.x-specific-marshallers}}, contexts: Seq[(String, String)]){{/vendorExtensions.x-specific-marshallers.isEmpty}}: Route
 
     {{/operation}}
     }
